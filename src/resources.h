@@ -1,7 +1,7 @@
 #pragma once
 #include "nanovg.h"
 
-int backgroundImage, surferImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage;
+int backgroundImage, surferImage, playerImage, boardImage, interfaceImage, naughtySurferImage;
 int objectTextures[];
 
 void loadResources(NVGcontext* ctx);

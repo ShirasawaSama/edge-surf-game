@@ -39,7 +39,7 @@ solution "edge-surf-game"
 		kind "ConsoleApp"
 		language "C"
 		files { "src/*.c" }
-		includedirs { "src", "nanovg/src", "Collections-C/src/include" }
+		includedirs { "src", "nanovg/src", "Collections-C/src/include", "miniaudio" }
 		targetdir("build")
 		links { "nanovg", "Collections-C" }
 
