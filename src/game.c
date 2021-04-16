@@ -1,33 +1,69 @@
 #include "utils.h"
 #include "game.h"
 #include "resources.h"
-#include "linkedList.h"
+#include "objects.h"
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "cc_queue.h"
 
 const float SURFER_TOP = 0.33F;
 
 extern int width, height;
 extern int backgroundImage, playerImage, boardImage, objectsSmallImage;
 
-int surfer = 0, speed = 4;
+int surfer = 0, speed = 0;
 
+bool paused = false, stop = false;
 int distance = 0, surferAction = 0;
+float offset = 0;
 
-enum ObjectType {
-	SMALL_OBJECT
-};
+Queue *objects;
 
-typedef struct Object {
-	int type, index;
-	float x, y;
-} Object;
+static void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	NVG_NOTUSED(scancode);
+	NVG_NOTUSED(mods);
+	if (action != GLFW_PRESS) return;
+	switch (key) {
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, GL_TRUE);
+		break;
+	case GLFW_KEY_SPACE:
+		paused = !paused;
+		break;
+	case GLFW_KEY_LEFT:
+	case GLFW_KEY_A:
+		speed = 4;
+		surferAction = surferAction == 2 ? 1 : 2;
+		break;
+	case GLFW_KEY_RIGHT:
+	case GLFW_KEY_D:
+		speed = 4;
+		surferAction = surferAction == 4 ? 5 : 4;
+		break;
+	case GLFW_KEY_UP:
+	case GLFW_KEY_W:
+		stop = true;
+		speed = 0;
+		surferAction = 0;
+		break;
+	case GLFW_KEY_DOWN:
+	case GLFW_KEY_S:
+		stop = false;
+		speed = 4;
+		surferAction = 3;
+	}
+}
 
-void initGame() {
+void initGame(GLFWwindow* window) {
 	srand((unsigned int)time(0));
-	//objects = listCreate(NULL);
+	glfwSetKeyCallback(window, key);
+	queue_new(&objects);
+}
+
+void destoryGame() {
+	queue_destroy(objects);
 }
 
 void drawSurfer(NVGcontext* ctx) {
@@ -37,34 +73,45 @@ void drawSurfer(NVGcontext* ctx) {
 }
 
 void drawObjects(NVGcontext* ctx) {
-	/*while(objects != NULL) {
-		LinkedList objPtr = *objects;
-		if (objPtr == NULL) break;
-		Object* obj = (Object*)objPtr->data;
-		if (obj == NULL || obj->y > distance) break;
-		listPop(objects);
-	}
 	if (distance > height) {
-		printf("%d", distance);
-		if (distance % 500 <= speed) {
-			Object obj = { SMALL_OBJECT, 2, randomFloat() * width, distance + height };
-			listPush(objects, &obj);
+		if (distance % 103 <= speed && randomFloat() > 0.7) {
+			queue_enqueue(objects, makeSmallObject(randomFloat() * width + offset, distance + height));
 		}
 	}
-	LinkedList *node = objects;
-	while (node != NULL) {
-		Object* obj = (Object*)(*node)->data;
-		if (obj == NULL) break;
-		printf("344");
-		drawImage(ctx, objectsSmallImage, 1, 32 * obj->index, 0, 32, 32, obj->x, obj->y);
-		node = (*node)->next;
-	}*/
+	QueueIter iter;
+	queue_iter_init(&iter, objects);
+	Object *obj = NULL;
+	while (queue_iter_next(&iter, &obj) != CC_ITER_END) {
+		if (obj->y < distance) {
+			queue_poll(objects, NULL);
+			free(obj);
+			obj = NULL;
+		} else drawImage(ctx, objectsSmallImage, 1, 32 * obj->index, 0, 32, 32, obj->x - offset, obj->y - distance);
+	}
+}
+
+void calcOffset() {
+	if (surferAction == 0) return;
+	distance += speed;
+	float ratio = 0;
+	switch (surferAction) {
+	case 1:
+		ratio = -0.4;
+		break;
+	case 2:
+		ratio = -0.2;
+		break;
+	case 5:
+		ratio = 0.4;
+		break;
+	case 4: ratio = 0.2;
+	}
+	offset += ratio * speed;
 }
 
 void draw(NVGcontext* ctx) {
-	distance += speed;
-
-	drawImage(ctx, backgroundImage, 1, 0, distance % 256, width, height, 0, 0); // Background
+	calcOffset();
+	drawImage(ctx, backgroundImage, 1, (int)offset % 256, distance % 256, width, height, 0, 0); // Background
 
 	drawSurfer(ctx);
 	drawObjects(ctx);

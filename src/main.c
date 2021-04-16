@@ -31,7 +31,7 @@ int main() {
 		return -1;
 	}
 	loadResources(ctx);
-	initGame();
+	initGame(window);
 	printf("Loaded!\n");
 	while (!glfwWindowShouldClose(window)) {
 		glfwGetWindowSize(window, &width, &height);
@@ -44,6 +44,7 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	destoryGame();
 	freeResources(ctx);
 	nvgDeleteGL3(ctx);
 	glfwTerminate();
