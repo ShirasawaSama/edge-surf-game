@@ -2,6 +2,6 @@
 #include "nanovg.h"
 #include <GLFW/glfw3.h>
 
-void initGame(GLFWwindow* window);
-void destoryGame();
+void initGame(NVGcontext* ctx, GLFWwindow* window);
+void destoryGame(NVGcontext* ctx);
 void draw(NVGcontext* ctx);

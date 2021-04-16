@@ -4,7 +4,6 @@
 #include "nanovg.h"
 #include "nanovg_gl.h"
 #include "main.h"
-#include "resources.h"
 #include "game.h"
 
 int width, height;
@@ -14,7 +13,7 @@ int main() {
 		printf("Failed to init GLFW.");
 		return -1;
 	}
-	GLFWwindow* window = glfwCreateWindow(1000, 600, "NanoVG", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1000, 600, "Edge Surf Game", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -30,8 +29,7 @@ int main() {
 		printf("Could not init nanovg.\n");
 		return -1;
 	}
-	loadResources(ctx);
-	initGame(window);
+	initGame(ctx, window);
 	printf("Loaded!\n");
 	while (!glfwWindowShouldClose(window)) {
 		glfwGetWindowSize(window, &width, &height);
@@ -44,8 +42,7 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-	destoryGame();
-	freeResources(ctx);
+	destoryGame(ctx);
 	nvgDeleteGL3(ctx);
 	glfwTerminate();
 	return 0;
