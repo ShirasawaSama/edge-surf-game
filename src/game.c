@@ -6,7 +6,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "cc_queue.h"
+#include "cc_list.h"
 
 const float SURFER_TOP = 0.33F;
 
@@ -17,21 +17,28 @@ extern int objectHitBoxs[][2], objectTextures[10];
 int surfer = 0, initialSpeed = 4;
 
 bool stop = true, finished = false, unlimitedHearts = false, unlimitedPower = false, hasDog = true;
-int surferAction = 0, heart = 3, power = 0, rush = 0, coinCount = 0;
+int surferAction = 0, heart = 3, power = 0, rush = 0, coinCount = 5;
 float distance = 0, offset = 0, speed = 0, playerX, playerY;
 
-int invincibleTimer = 0, fallTimer = 0, boardTimer = 0, flyingTimer = 0;
+int invincibleTimer = 0, fallTimer = 0, boardTimer = 0, flyingTimer = 0, changeDirectionTimer = 0;
 
 NaughtySurfer naughtySurfer = { 0, 2, 0, 0, false };
-Queue *objects;
+CC_List *objects;
 
 void resetGame() {
-    queue_destroy(objects);
-    queue_new(&objects);
+    cc_list_destroy(objects);
+    cc_list_new(&objects);
     stop = true;
     finished = unlimitedHearts = unlimitedPower = hasDog = false;
     heart = 3;
     distance = offset = speed = playerX = playerY = power = surferAction = rush = invincibleTimer = fallTimer = boardTimer = flyingTimer = coinCount = 0;
+}
+
+void stopPlayer() {
+    stop = true;
+    speed = 0;
+    surferAction = 0;
+    rush = 0;
 }
 
 static void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -85,10 +92,7 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
             break;
         case GLFW_KEY_UP:
         case GLFW_KEY_W:
-            stop = true;
-            speed = 0;
-            surferAction = 0;
-            rush = 0;
+            stopPlayer();
             break;
         case GLFW_KEY_DOWN:
         case GLFW_KEY_S:
@@ -104,11 +108,11 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
 void initGame(NVGcontext* ctx, GLFWwindow* window) {
     loadResources(ctx);
     glfwSetKeyCallback(window, key);
-    queue_new(&objects);
+    cc_list_new(&objects);
 }
 
 void destoryGame(NVGcontext* ctx) {
-    queue_destroy(objects);
+    cc_list_destroy(objects);
     freeResources(ctx);
 }
 
@@ -167,28 +171,34 @@ void drawStatusBar(NVGcontext* ctx) {
         drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, center + 75, 3);
         drawImage(ctx, interfaceImage, 1, 0, 49, 24, 24, center + 100, 3);
     } else {
-        float left = center + 50;
+        float left = center + 56;
         for (int i = power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, left += 25, 3);
         for (int i = 3 - power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 0, 24, 24, 24, left += 25, 3);
     }
-    for (int i = coinCount, left = 10; i-- > 0; left += 24) drawImage(ctx, interfaceImage, 1, 24, 72, 24, 24, left, 5);
+    if (coinCount) {
+        drawImage(ctx, interfaceImage, 1, 24, 72, 24, 24, 10, 5);
+        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
+        nvgFillColor(ctx, nvgRGBA(0, 0, 0, 230));
+        sprintf(str, "x%d", coinCount);
+        nvgText(ctx, 37, 27, str, NULL);
+    }
 }
+
+bool isInvincible() { return fallTimer || invincibleTimer; }
 
 bool isNaughtySurferExists() {
     return naughtySurfer.visible && naughtySurfer.action != 2;
 }
 
 void hitPlayer() {
-    if (fallTimer || invincibleTimer) return;
+    if (isInvincible()) return;
     speed = 0;
     stop = true;
     if (hasDog) {
         hasDog = false;
         float x = playerX + offset - 32, y = playerY + distance - 32;
-        Object *obj = makeInteractObject(x, y);
-        obj->index = 7;
-        queue_enqueue(objects, obj);
-        queue_enqueue(objects, makeRippleObject(x - 16, y - 25));
+        cc_list_add(objects, makeRippleObject(x - 16, y - 25));
+        cc_list_add(objects, makeInteractObjectWithIndex(x, y, 7));
     } else if (!unlimitedHearts && --heart < 0) heart = 0;
     surferAction = 6;
     if (heart < 1) finished = true;
@@ -196,39 +206,47 @@ void hitPlayer() {
 }
 
 void drawObjects(NVGcontext* ctx) {
-    if (distance > height && !fallTimer && !invincibleTimer) {
+    if (distance > height && !stop) {
         int dis = (int)distance;
-        if (dis % 103 <= speed && randomFloat() > 0.6) queue_enqueue(objects, makeSmallObject(randomFloat() * width + offset, distance + height));
-        if (dis % 133 <= speed && randomFloat() > 0.5) queue_enqueue(objects, makeSlowdownObject(randomFloat() * width + offset, distance + height));
-        if (dis % 133 <= speed && randomFloat() > 0.8) queue_enqueue(objects, makeAmbientObject(randomFloat() * width + offset, distance + height));
-        if (dis % 1000 <= speed && randomFloat() > 0.996) queue_enqueue(objects, makeIslandObject(randomFloat() * width + offset, distance + height));
-        if (dis % 103 <= speed && randomFloat() > 0.6) {
-            double x = randomFloat() * width + offset, y = distance + height;
-            queue_enqueue(objects, makeInteractObject(x, y));
-            queue_enqueue(objects, makeRippleObject(x - 16, y - 18));
+        if (dis % 73 <= speed && randomFloat() > 0.45) cc_list_add(objects, makeSmallObject(randomFloat() * width + offset, distance + height * (1 + randomFloat())));
+        if (dis % 44 <= speed && randomFloat() > 0.65) cc_list_add(objects, makeSlowdownObject(randomFloat() * width + offset, distance + height * (1 + randomFloat())));
+        if (dis % 133 <= speed && randomFloat() > 0.93) cc_list_add(objects, makeAmbientObject(randomFloat() * width + offset, distance + height * (1 + randomFloat())));
+        if (dis % 1000 <= speed && randomFloat() > 0.98) {
+            float x = randomFloat() * width + offset, y = distance + height * (1 + randomFloat());
+            cc_list_add(objects, makeIslandObject(x, y));
+            cc_list_add(objects, makeInteractObjectWithIndex(x + 620, y + 94, 0));
+            cc_list_add(objects, makeEffectObject(x + 800, y + 140, 5));
         }
-        if (dis % 100 <= speed && randomFloat() > 0.4) {
-            double x = randomFloat() * width + offset, y = distance + height;
-            queue_enqueue(objects, makeBigObject(x, y));
-            queue_enqueue(objects, makeRippleObject(x - 16, y - 18));
+        if (dis % 186 <= speed && randomFloat() > 0.98) {
+            double x = randomFloat() * width + offset, y = distance + height * (1 + randomFloat());
+            cc_list_add(objects, makeRippleObject(x - 16, y - 18));
+            cc_list_add(objects, makeInteractObject(x, y));
         }
-        if (dis % 400 <= speed && randomFloat() > 0.7) {
-            double x = randomFloat() * width + offset, y = distance + height;
-            queue_enqueue(objects, makeSandBarObject(x, y));
+        if (dis % 77 <= speed && randomFloat() > 0.36) {
+            double x = randomFloat() * width + offset, y = distance + height * (1 + randomFloat());
+            cc_list_add(objects, makeRippleObject(x - 16, y - 18));
+            cc_list_add(objects, makeBigObject(x, y));
+        }
+        if (dis % 433 <= speed && randomFloat() > 0.7) {
+            double x = randomFloat() * width + offset, y = distance + height * (1 + randomFloat());
+            cc_list_add(objects, makeSandBarObject(x, y));
+        }
+        if (dis % 589 <= speed && randomFloat() > 0.8) {
+            cc_list_add(objects, makeEffectObject(randomFloat() * width + offset, distance + height * (1 + randomFloat()), 1));
+            cc_list_add(objects, makeEffectObject(randomFloat() * width + offset, distance + height * (1 + randomFloat()), 1));
         }
     }
-    QueueIter iter;
-    queue_iter_init(&iter, objects);
+    CC_ListIter iter;
+    cc_list_iter_init(&iter, objects);
     Object *obj = NULL;
-    while (queue_iter_next(&iter, &obj) != CC_ITER_END) {
-        int type = obj->type;
-        if (type < 0 || type > 5 && obj->y + objectHitBoxs[type][1] < distance) {
-            queue_poll(objects, NULL);
-            if (obj->index < 0) continue;
+    while (cc_list_iter_next(&iter, &obj) != CC_ITER_END) {
+        int type = obj->type, boxX = objectHitBoxs[type][0], boxY = objectHitBoxs[type][1];
+        if (obj->y + boxY < distance) {
+            cc_list_iter_remove(&iter, NULL);
             free(obj);
             obj = NULL;
         } else {
-            int boxX = objectHitBoxs[type][0], boxY = objectHitBoxs[type][1], maxX = boxX / 2, maxY = boxY / 2;
+            int maxX = boxX / 2, maxY = boxY / 2;
             float tx = obj->x - offset, ty = obj->y - distance;
             float x = maxX - 4, y = maxY * 0.7, cx = tx + maxX, cy = ty + maxY;
             if (!obj->once || obj->stage > 80) drawImage(ctx, objectTextures[type], 1, boxX * obj->index,
@@ -238,12 +256,11 @@ void drawObjects(NVGcontext* ctx) {
                     if (obj->stage <= obj->maxStage * 14 + 80) obj->stage++;
                 } else if (++obj->stage > obj->maxStage * 14) obj->stage = 0;
             }
-            if (!fallTimer && !invincibleTimer && !flyingTimer && playerX > cx - x && playerX < cx + x && playerY > cy - y && playerY < cy + y) switch (type) {
+            if (!flyingTimer && playerX > cx - x && playerX < cx + x && playerY > cy - y && playerY < cy + y) switch (type) {
             case INTERACT_OBJECT:
                 switch (obj->index) {
-                case 0:
-                    flyingTimer = 300;
-                    goto out;
+                case 0: flyingTimer = 300;
+                case 7: goto out;
                 case 2:
                     if (power < 5) power++;
                     break;
@@ -251,19 +268,34 @@ void drawObjects(NVGcontext* ctx) {
                     if (heart < 5) heart++;
                     break;
                 case 4:
-                    if (heart < 5) coinCount++;
+                    coinCount++;
                     break;
-                case 6:
-                    hasDog = true;
-                    break;
+                case 6: hasDog = true;
                 }
                 obj->y = 0;
                 out: break;
+            case EFFECT_OBJECT:
+                if (obj->index == 1) {
+                    CC_ListIter iter2;
+                    cc_list_iter_init(&iter2, objects);
+                    Object* obj2 = NULL;
+                    while (cc_list_iter_next(&iter2, &obj2) != CC_ITER_END) if (obj2->type == EFFECT_OBJECT && obj2 != obj && obj2->index == 1) {
+                        obj->index = obj2->index = 0;
+                        invincibleTimer = 150;
+                        stopPlayer();
+                        offset = obj2->x - playerX + 32;
+                        distance = obj2->y - playerY + 32;
+                        break;
+                    }
+                }
+                break;
             case SMALL_OBJECT:
+                if (isInvincible() || changeDirectionTimer) break;
                 surferAction = 1 + randomFloat() * 5;
                 if (surferAction == 6) surferAction = 5;
+                changeDirectionTimer = 40;
                 break;
-            case SLOWDOWN_OBJECT: speed = 1;
+            case SLOWDOWN_OBJECT: if (!isInvincible()) speed = 1;
             case RIPPLE_OBJECT: break;
             default: hitPlayer();
             }
@@ -272,12 +304,13 @@ void drawObjects(NVGcontext* ctx) {
                 if (nx > cx - x && nx < cx + x && ny > cy - y && ny < cy + y) switch (type) {
                 case SLOWDOWN_OBJECT:
                 case INTERACT_OBJECT:
+                case EFFECT_OBJECT:
                 case RIPPLE_OBJECT: break;
                 default:
                     naughtySurfer.action = 2;
                     return;
                 }
-                if (!fallTimer && !invincibleTimer && !flyingTimer && playerX > nx - 32 && playerX < nx + 32 && playerY > ny - 50 && playerY < ny + 20) {
+                if (!isInvincible() && !flyingTimer && playerX > nx - 32 && playerX < nx + 32 && playerY > ny - 50 && playerY < ny + 20) {
                     naughtySurfer.action = 2;
                     hitPlayer();
                 }
@@ -303,7 +336,7 @@ void drawFinishViewer(NVGcontext* ctx) {
 }
 
 void drawNaughtySurfer(NVGcontext* ctx) {
-    if (randomFloat() > 0.997) {
+    if (randomFloat() > 0.999) {
         if (!naughtySurfer.visible) {
             naughtySurfer.y = distance + 5;
             naughtySurfer.x = width * randomFloat() + offset;
@@ -357,6 +390,7 @@ void draw(NVGcontext* ctx) {
         srand((unsigned int)time(0));
         boardTimer = 0;
     }
+    if (changeDirectionTimer > 0) changeDirectionTimer--;
     if (!finished) {
         calcOffset();
         if (fallTimer && fallTimer++ > 200) {

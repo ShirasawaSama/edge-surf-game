@@ -9,7 +9,8 @@ enum ObjectType {
 	AMBIENT_OBJECT,
 	SAND_BAR_OBJECT,
 	ISLAND_OBJECT,
-	INTERACT_OBJECT
+	INTERACT_OBJECT,
+	EFFECT_OBJECT
 };
 
 int objectHitBoxs[][2];
@@ -34,3 +35,5 @@ Object* makeAmbientObject(float x, float y);
 Object* makeSandBarObject(float x, float y);
 Object* makeIslandObject(float x, float y);
 Object* makeInteractObject(float x, float y);
+Object* makeInteractObjectWithIndex(float x, float y, int index);
+Object* makeEffectObject(float x, float y, int index);

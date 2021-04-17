@@ -2,13 +2,14 @@
 #include "objects.h"
 #include "utils.h"
 #include <stdlib.h>
+#include <math.h>
 
-int objectHitBoxs[][2] = { {32, 32}, {64, 64}, {64, 64}, {96, 96}, {64, 64}, {256, 128}, { 1280, 512 }, { 64, 64} };
+int objectHitBoxs[][2] = { {32, 32}, {64, 64}, {64, 64}, {96, 96}, {64, 64}, {256, 128}, { 1280, 512 }, { 64, 64 }, { 128, 128 } };
 
 Object* makeSmallObject(float x, float y) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = SMALL_OBJECT;
-	obj->index = (int) (randomFloat() * 8);
+	obj->index = floor(randomDouble() * 8);
 	obj->x = x;
 	obj->y = y;
 	obj->stage = obj->maxStage = 0;
@@ -19,7 +20,8 @@ Object* makeSmallObject(float x, float y) {
 Object* makeBigObject(float x, float y) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = BIG_OBJECT;
-	obj->index = (int)(randomFloat() * 30);
+	obj->index = floor(randomDouble() * 30);
+	if (obj->index == 26 || obj->index == 27) obj->index = floor(randomDouble() * 26);
 	obj->x = x;
 	obj->y = y;
 	obj->stage = obj->maxStage = 0;
@@ -41,7 +43,7 @@ Object* makeRippleObject(float x, float y) {
 Object* makeSlowdownObject(float x, float y) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = SLOWDOWN_OBJECT;
-	obj->index = (int)(randomFloat() * 9);
+	obj->index = floor(randomDouble() * 9);
 	obj->x = x;
 	obj->y = y;
 	obj->stage = 0;
@@ -53,7 +55,7 @@ Object* makeSlowdownObject(float x, float y) {
 Object* makeAmbientObject(float x, float y) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = AMBIENT_OBJECT;
-	obj->index = (int)(randomFloat() * 4);
+	obj->index = floor(randomDouble() * 4);
 	obj->x = x;
 	obj->y = y;
 	obj->stage = 0;
@@ -65,7 +67,7 @@ Object* makeAmbientObject(float x, float y) {
 Object* makeSandBarObject(float x, float y) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = SAND_BAR_OBJECT;
-	obj->index = (int)(randomFloat() * 4);
+	obj->index = floor(randomDouble() * 4);
 	obj->x = x;
 	obj->y = y;
 	obj->stage = obj->maxStage = 0;
@@ -83,15 +85,32 @@ Object* makeIslandObject(float x, float y) {
 	return obj;
 }
 
-Object* makeInteractObject(float x, float y) {
+Object* makeInteractObjectWithIndex(float x, float y, int index) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = INTERACT_OBJECT;
-	obj->index = (int)(randomFloat() * 6);
-	if (obj->index == 5) obj->index = 6;
+	obj->index = index;
 	obj->x = x;
 	obj->y = y;
 	obj->stage = 0;
 	obj->maxStage = 3;
+	obj->once = false;
+	return obj;
+}
+
+Object* makeInteractObject(float x, float y) {
+	int index = floor(randomDouble() * 6);
+	Object* obj = makeInteractObjectWithIndex(x, y, index == 5 ? 6 : index);
+	return obj;
+}
+
+Object* makeEffectObject(float x, float y, int index) {
+	Object* obj = (Object*)malloc(sizeof(Object));
+	obj->type = EFFECT_OBJECT;
+	obj->index = index;
+	obj->x = x;
+	obj->y = y;
+	obj->stage = 0;
+	obj->maxStage = 2;
 	obj->once = false;
 	return obj;
 }

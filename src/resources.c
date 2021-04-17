@@ -1,7 +1,7 @@
 #include "resources.h"
 
 int backgroundImage, surferImage, playerImage, boardImage, interfaceImage, naughtySurferImage,
-	objectsSmallImage, objectsBigImage, slowdownImage, rippleImage, ambientImage, sandBarImage, islandImage, interactImage;
+	objectsSmallImage, objectsBigImage, slowdownImage, rippleImage, ambientImage, sandBarImage, islandImage, interactImage, effectsImage;
 int objectTextures[10];
 
 void loadResources(NVGcontext* ctx) {
@@ -20,6 +20,7 @@ void loadResources(NVGcontext* ctx) {
 	objectTextures[5] = sandBarImage = nvgCreateImage(ctx, "../src/images/sandbar256.png", 0);
 	objectTextures[6] = islandImage = nvgCreateImage(ctx, "../src/images/island1280.png", 0);
 	objectTextures[7] = interactImage = nvgCreateImage(ctx, "../src/images/interact64.png", 0);
+	objectTextures[8] = effectsImage = nvgCreateImage(ctx, "../src/images/effects128.png", 0);
 
 	nvgCreateFont(ctx, "sans", "../src/FiraCode-Regular.ttf");
 	nvgFontFace(ctx, "sans");
@@ -40,4 +41,5 @@ void freeResources(NVGcontext* ctx) {
 	nvgDeleteImage(ctx, sandBarImage);
 	nvgDeleteImage(ctx, islandImage);
 	nvgDeleteImage(ctx, interactImage);
+	nvgDeleteImage(ctx, effectsImage);
 }
