@@ -7,3 +7,6 @@
 [submodule "miniaudio"]
 	path = miniaudio
 	url = https://github.com/mackron/miniaudio.git
+[submodule "http-client-c"]
+	path = http-client-c
+	url = https://github.com/langhai/http-client-c.git
