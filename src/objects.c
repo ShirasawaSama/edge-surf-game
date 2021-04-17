@@ -17,16 +17,20 @@ Object* makeSmallObject(float x, float y) {
 	return obj;
 }
 
-Object* makeBigObject(float x, float y) {
+Object* makeBigObjectWithIndex(float x, float y, int index) {
 	Object* obj = (Object*)malloc(sizeof(Object));
 	obj->type = BIG_OBJECT;
-	obj->index = floor(randomDouble() * 30);
-	if (obj->index == 26 || obj->index == 27) obj->index = floor(randomDouble() * 26);
+	obj->index = index;
 	obj->x = x;
 	obj->y = y;
 	obj->stage = obj->maxStage = 0;
 	obj->once = false;
 	return obj;
+}
+
+Object* makeBigObject(float x, float y) {
+	int index = floor(randomDouble() * 30);
+	return makeBigObjectWithIndex(x, y, index >= 25 && index <= 27 ? floor(randomDouble() * 25) : index);
 }
 
 Object* makeRippleObject(float x, float y) {

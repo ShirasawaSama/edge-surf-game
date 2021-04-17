@@ -1,3 +1,4 @@
+#pragma warning(disable:4244)
 #define MINIAUDIO_IMPLEMENTATION
 #include <stdio.h>
 #include <GL/glew.h>
@@ -13,6 +14,7 @@ int width, height;
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
 	ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
 	if (pDecoder != NULL) ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL, MA_TRUE);
+	(void)pInput;
 }
 
 ma_decoder decoder;
@@ -43,6 +45,7 @@ int playMusic() {
 		ma_decoder_uninit(&decoder);
 		return -1;
 	}
+	return 0;
 }
 
 int main() {
@@ -60,8 +63,20 @@ int main() {
 		printf("Could not init glew.\n");
 		return -1;
 	}
+	#ifndef _WIN32
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	#endif
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+	glEnable(GL_LINE_SMOOTH);
+	glEnable(GL_MULTISAMPLE);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glGetError();
-	NVGcontext* ctx = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
+	NVGcontext* ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
 	if (ctx == NULL) {
 		printf("Could not init nanovg.\n");
 		return -1;

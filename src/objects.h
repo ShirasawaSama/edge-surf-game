@@ -29,6 +29,7 @@ typedef struct NaughtySurfer {
 
 Object* makeSmallObject(float x, float y);
 Object* makeBigObject(float x, float y);
+Object* makeBigObjectWithIndex(float x, float y, int index);
 Object* makeSlowdownObject(float x, float y);
 Object* makeRippleObject(float x, float y);
 Object* makeAmbientObject(float x, float y);
