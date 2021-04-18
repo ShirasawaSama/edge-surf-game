@@ -9,10 +9,10 @@
 #endif
 
 double randomDouble() {
-	return (double) rand() / RAND_MAX;
+	return ((double) rand()) / ((double) RAND_MAX);
 }
 float randomFloat() {
-	return (float)rand() / RAND_MAX;
+	return ((float)rand()) / ((float)RAND_MAX);
 }
 
 void drawImage(NVGcontext* vg, int image, float alpha, float sx, float sy, float w, float h, float x, float y) {

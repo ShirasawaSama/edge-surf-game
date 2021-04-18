@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "cc_list.h"
 
 enum ObjectType {
 	SMALL_OBJECT,
@@ -10,7 +11,8 @@ enum ObjectType {
 	SAND_BAR_OBJECT,
 	ISLAND_OBJECT,
 	INTERACT_OBJECT,
-	EFFECT_OBJECT
+	EFFECT_OBJECT,
+	DOCK_OBJECT
 };
 
 int objectHitBoxs[][2];
@@ -38,3 +40,4 @@ Object* makeIslandObject(float x, float y);
 Object* makeInteractObject(float x, float y);
 Object* makeInteractObjectWithIndex(float x, float y, int index);
 Object* makeEffectObject(float x, float y, int index);
+void makeDocksObject(float x, float y, CC_List* list, bool hasTop);

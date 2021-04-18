@@ -38,7 +38,7 @@ void resetGame() {
     cc_list_new(&objects);
     paused = true;
     finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = enemyStoped = false;
-    heart = 1;
+    heart = 3;
     distance = offset = speed = playerX = playerY = enemyX = enemyY = power = surferAction = rushTimer = invincibleTimer = fallTimer = boardTimer =
         flyingTimer = changeDirectionTimer = coinCount = enemyTimer = boardBrokenTimer = 0;
 }
@@ -249,34 +249,38 @@ float randomY() { return distance + height * (1 + randomFloat()); }
 void generateObjects() {
     if (distance < height || paused) return;
     int dis = (int)distance;
-    if (dis % 73 <= speed && randomFloat() > 0.45) addObject(makeSmallObject(randomX(), randomY()));
-    if (dis % 44 <= speed && randomFloat() > 0.65) addObject(makeSlowdownObject(randomX(), randomY()));
-    if (dis % 133 <= speed && randomFloat() > 0.93) addObject(makeAmbientObject(randomX(), randomY()));
-    if (dis % (height * 3) <= speed && randomFloat() > 0.9) {
+    float chanceModify = ((int) (distance / 1000)) * 0.03F;
+    if (chanceModify > 0.16F) chanceModify = 0.16F;
+    if (dis % 73 <= speed && randomFloat() > 0.45F - chanceModify) addObject(makeSmallObject(randomX(), randomY()));
+    if (dis % 44 <= speed && randomFloat() > 0.65F - chanceModify) addObject(makeSlowdownObject(randomX(), randomY()));
+    if (dis % 133 <= speed && randomFloat() > 0.93F - chanceModify) addObject(makeAmbientObject(randomX(), randomY()));
+    if (dis % 633 <= speed && randomFloat() > 0.5F - chanceModify) makeDocksObject(randomX(), randomY(), objects, false);
+    if (dis % (height * 3) <= speed && randomFloat() > 0.9) { // Island
         float x = randomX(), y = randomY();
         addObject(makeIslandObject(x, y));
         addObject(makeInteractObjectWithIndex(x + 620, y + 94, 0));
         addObject(makeEffectObject(x + 800, y + 140, 5));
     }
-    if (dis % 175 <= speed && randomFloat() > 0.1) {
+    if (dis % 175 <= speed && randomFloat() > 0.5F) { // Interact
         double x = randomX(), y = randomY();
         addObject(makeRippleObject(x - 16, y - 18));
         addObject(makeInteractObject(x, y));
     }
-    if (dis % 77 <= speed && randomFloat() > 0.36) {
+    if (dis % 77 <= speed && randomFloat() > 0.36F - chanceModify) { // Big
         double x = randomX(), y = randomY();
         addObject(makeRippleObject(x - 16, y - 18));
         addObject(makeBigObject(x, y));
     }
-    if (dis % 433 <= speed && randomFloat() > 0.7) {
+    if (dis % 433 <= speed && randomFloat() > 0.7F - chanceModify) { // SandBar
         double x = randomX(), y = randomY();
         addObject(makeSandBarObject(x, y));
+        if (randomFloat() > 0.7F) makeDocksObject(x + randomFloat() * 198, y + 128, objects, true);
     }
-    if (dis % 589 <= speed && randomFloat() > 0.9) {
+    if (dis % 589 <= speed && randomFloat() > 0.9F) {
         addObject(makeEffectObject(randomX(), randomY(), 1));
         addObject(makeEffectObject(randomX(), randomY(), 1));
     }
-    if (dis % 512 <= speed && randomFloat() > 0.9) {
+    if (dis % 512 <= speed && randomFloat() > 0.9F - chanceModify) {
         double x = randomX(), y = randomY();
         addObject(makeBigObjectWithIndex(x + 150, y + 150, 25));
         for (int i = 1 + randomFloat() * 3; i-- >= 0;) addObject(makeInteractObjectWithIndex(x + randomFloat() * 300, y + randomFloat() * 300, 1));
@@ -302,10 +306,13 @@ void drawObjects(NVGcontext* ctx) {
             float x = maxX - 4, y = maxY * 0.7, cx = tx + maxX, cy = ty + maxY;
             switch (type) {
             case SAND_BAR_OBJECT:
-                y = 35;
+                y = 20;
                 break;
             case INTERACT_OBJECT:
                 if (obj->index == 1) x = y = 70;
+                break;
+            case DOCK_OBJECT:
+                x = y = 38;
                 break;
             case ISLAND_OBJECT: y = 125;
             }
@@ -360,7 +367,7 @@ void drawObjects(NVGcontext* ctx) {
                 break;
             case SMALL_OBJECT:
                 if (isInvincible() || changeDirectionTimer) break;
-                surferAction = 1 + floor(randomFloat() * 6);
+                surferAction = 1 + floor(randomFloat() * 5);
                 changeDirectionTimer = 40;
                 break;
             case SLOWDOWN_OBJECT: if (!isInvincible()) {
@@ -398,8 +405,6 @@ void drawObjects(NVGcontext* ctx) {
                     return;
                 }
                 if (nx > cx - x && nx < cx + x && ny > cy - y && ny < cy + y) switch (type) {
-                case SMALL_OBJECT:
-                case SLOWDOWN_OBJECT:
                 case INTERACT_OBJECT:
                 case EFFECT_OBJECT:
                 case RIPPLE_OBJECT: break;
@@ -411,7 +416,7 @@ void drawObjects(NVGcontext* ctx) {
 }
 
 void drawNaughtySurfer(NVGcontext* ctx) {
-    if (randomFloat() > 0.999) {
+    if (randomDouble() > 0.9995) {
         if (!naughtySurfer.visible) {
             naughtySurfer.y = distance + 5;
             naughtySurfer.x = width * randomFloat() + offset;
@@ -442,13 +447,13 @@ void calcOffset() {
     float ratio = 0;
     switch (surferAction) {
     case 1:
-        ratio = -0.5F;
+        ratio = -0.6F;
         break;
     case 2:
         ratio = -0.2F;
         break;
     case 5:
-        ratio = 0.5F;
+        ratio = 0.6F;
         break;
     case 4: ratio = 0.2F;
     }
@@ -540,7 +545,7 @@ void drawEnemy(NVGcontext* ctx) {
     if (enemyStoped) drawImage(ctx, enemyImage, 1, 128, boardBrokenTimer / 10 * 128, 128, 128, enemyX - offset, enemyY - distance);
     else {
         float tx = offset + playerX - 64, ty = distance + playerY - 64;
-        if (ty - enemyY > 6.0F) enemyY += 4.24F;
+        if (ty - enemyY > 6) enemyY += 4.16F;
         enemyX += 2.0F * (enemyX > tx ? -1 : enemyX == tx ? 0 : 1);
         if (enemyX - tx < 2.5F) enemyX = tx;
     }
