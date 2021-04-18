@@ -1,6 +1,6 @@
 #include "resources.h"
 
-int backgroundImage, surferImage, playerImage, boardImage, interfaceImage, naughtySurferImage,
+int backgroundImage, surferImage, playerImage, boardImage, interfaceImage, naughtySurferImage, enemyImage,
 	objectsSmallImage, objectsBigImage, slowdownImage, rippleImage, ambientImage, sandBarImage, islandImage, interactImage, effectsImage;
 int objectTextures[10];
 
@@ -10,8 +10,8 @@ void loadResources(NVGcontext* ctx) {
 	playerImage = nvgCreateImage(ctx, "../src/images/player64.png", 0);
 	boardImage = nvgCreateImage(ctx, "../src/images/surfboard64.png", 0);
 	interfaceImage = nvgCreateImage(ctx, "../src/images/interface24.png", 0);
-	interfaceImage = nvgCreateImage(ctx, "../src/images/interface24.png", 0);
 	naughtySurferImage = nvgCreateImage(ctx, "../src/images/surfer64.png", 0);
+	enemyImage = nvgCreateImage(ctx, "../src/images/enemy128.png", 0);
 	objectTextures[0] = objectsSmallImage = nvgCreateImage(ctx, "../src/images/objects32.png", 0);
 	objectTextures[1] = objectsBigImage = nvgCreateImage(ctx, "../src/images/objects64.png", 0);
 	objectTextures[2] = slowdownImage = nvgCreateImage(ctx, "../src/images/slowdown64.png", 0);
@@ -33,6 +33,7 @@ void freeResources(NVGcontext* ctx) {
 	nvgDeleteImage(ctx, boardImage);
 	nvgDeleteImage(ctx, interfaceImage);
 	nvgDeleteImage(ctx, naughtySurferImage);
+	nvgDeleteImage(ctx, enemyImage);
 	nvgDeleteImage(ctx, objectsSmallImage);
 	nvgDeleteImage(ctx, objectsBigImage);
 	nvgDeleteImage(ctx, slowdownImage);

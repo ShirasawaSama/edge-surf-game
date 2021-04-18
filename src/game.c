@@ -14,17 +14,17 @@
 const float SURFER_TOP = 0.33F;
 
 extern int width, height;
-extern int backgroundImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage, naughtySurferImage;
+extern int backgroundImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage, naughtySurferImage, enemyImage;
 extern int objectHitBoxs[][2], objectTextures[10];
 
 char username[100];
 int surfer = 0, initialSpeed = 4;
 
-bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started;
+bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped;
 int surferAction, heart, power, coinCount;
-float distance, offset, speed, playerX, playerY;
+float distance, offset, speed, playerX, playerY, enemyX, enemyY;
 
-int invincibleTimer, fallTimer, boardTimer, flyingTimer, changeDirectionTimer, rushTimer;
+int invincibleTimer, fallTimer, boardTimer, flyingTimer, changeDirectionTimer, rushTimer, enemyTimer, boardBrokenTimer;
 
 NaughtySurfer naughtySurfer = { 0, 2, 0, 0, false };
 CC_List *objects = NULL;
@@ -37,10 +37,10 @@ void resetGame() {
     if (objects != NULL) cc_list_destroy(objects);
     cc_list_new(&objects);
     paused = true;
-    finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = false;
-    heart = 3;
-    distance = offset = speed = playerX = playerY = power = surferAction = rushTimer = invincibleTimer = fallTimer = boardTimer =
-        flyingTimer = changeDirectionTimer = coinCount = 0;
+    finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = enemyStoped = false;
+    heart = 1;
+    distance = offset = speed = playerX = playerY = enemyX = enemyY = power = surferAction = rushTimer = invincibleTimer = fallTimer = boardTimer =
+        flyingTimer = changeDirectionTimer = coinCount = enemyTimer = boardBrokenTimer = 0;
 }
 
 void stopPlayer() {
@@ -216,22 +216,29 @@ void drawStatusBar(NVGcontext* ctx) {
     }
 }
 
+void kickDog() {
+    if (!hasDog) return;
+    hasDog = false;
+    float x = playerX + offset - 32, y = playerY + distance - 32;
+    cc_list_add(objects, makeRippleObject(x - 16, y - 25));
+    cc_list_add(objects, makeInteractObjectWithIndex(x, y, 7));
+}
+
 void hitPlayer() {
     if (isInvincible()) return;
+    if (hasDog) {
+        kickDog();
+        invincibleTimer = 170;
+        return;
+    }
     speed = 0;
     paused = true;
-    if (hasDog) {
-        hasDog = false;
-        float x = playerX + offset - 32, y = playerY + distance - 32;
-        cc_list_add(objects, makeRippleObject(x - 16, y - 25));
-        cc_list_add(objects, makeInteractObjectWithIndex(x, y, 7));
-    } else if (!unlimitedHearts && --heart < 0) heart = 0;
+    if (!unlimitedHearts && --heart < 0) heart = 0;
     surferAction = 6;
     if (heart < 1) {
         finished = true;
         // http_post("http://127.0.0.1:1080", "", "");
-    }
-    else fallTimer = 1;
+    } else fallTimer = 1;
 }
 
 void addObject(Object* obj) { cc_list_add(objects, obj); }
@@ -251,7 +258,7 @@ void generateObjects() {
         addObject(makeInteractObjectWithIndex(x + 620, y + 94, 0));
         addObject(makeEffectObject(x + 800, y + 140, 5));
     }
-    if (dis % 175 <= speed && randomFloat() > 0.85) {
+    if (dis % 175 <= speed && randomFloat() > 0.1) {
         double x = randomX(), y = randomY();
         addObject(makeRippleObject(x - 16, y - 18));
         addObject(makeInteractObject(x, y));
@@ -271,7 +278,7 @@ void generateObjects() {
     }
     if (dis % 512 <= speed && randomFloat() > 0.9) {
         double x = randomX(), y = randomY();
-        addObject(makeBigObjectWithIndex(x, y + 150, 25));
+        addObject(makeBigObjectWithIndex(x + 150, y + 150, 25));
         for (int i = 1 + randomFloat() * 3; i-- >= 0;) addObject(makeInteractObjectWithIndex(x + randomFloat() * 300, y + randomFloat() * 300, 1));
         for (int i = randomFloat() * 3; i-- >= 0;) addObject(makeSlowdownObject(x + randomFloat() * 300, randomY() + y * 300));
         for (int i = randomFloat() * 3; i-- >= 0;) addObject(makeBigObject(x + randomFloat() * 300, randomY() + y * 300));
@@ -312,8 +319,15 @@ void drawObjects(NVGcontext* ctx) {
             if (!flyingTimer && playerX > cx - x && playerX < cx + x && playerY > cy - y && playerY < cy + y) switch (type) {
             case INTERACT_OBJECT:
                 switch (obj->index) {
-                case 0: flyingTimer = 300;
+                case 0:
+                    flyingTimer = 300;
+                    if (enemyTimer) enemyStoped = true;
                 case 7: goto out;
+                case 1:
+                    enemyTimer = 1;
+                    enemyX = obj->x;
+                    enemyY = obj->y;
+                    break;
                 case 2:
                     if (power < 5) power++;
                     break;
@@ -325,7 +339,10 @@ void drawObjects(NVGcontext* ctx) {
                     break;
                 case 6: hasDog = true;
                 }
-                obj->y = 0;
+                cc_list_iter_remove(&iter, NULL);
+                free(obj);
+                obj = NULL;
+                continue;
                 out: break;
             case EFFECT_OBJECT:
                 if (obj->index == 1) {
@@ -343,8 +360,7 @@ void drawObjects(NVGcontext* ctx) {
                 break;
             case SMALL_OBJECT:
                 if (isInvincible() || changeDirectionTimer) break;
-                surferAction = 1 + randomFloat() * 5;
-                if (surferAction == 6) surferAction = 5;
+                surferAction = 1 + floor(randomFloat() * 6);
                 changeDirectionTimer = 40;
                 break;
             case SLOWDOWN_OBJECT: if (!isInvincible()) {
@@ -369,6 +385,25 @@ void drawObjects(NVGcontext* ctx) {
                 if (!isInvincible() && !flyingTimer && playerX > nx - 32 && playerX < nx + 32 && playerY > ny - 50 && playerY < ny + 20) {
                     naughtySurfer.action = 2;
                     hitPlayer();
+                }
+            }
+            if (enemyTimer > 100 && !enemyStoped) {
+                float nx = enemyX - offset + 64, ny = enemyY - distance + 64;
+                if (!isInvincible() && !flyingTimer && playerX > nx - 64 && playerX < nx + 64 && playerY > ny - 64 && playerY < ny + 64) {
+                    kickDog();
+                    paused = finished = enemyStoped = true;
+                    heart = speed = 0;
+                    surferAction = 7;
+                    boardBrokenTimer = 1;
+                    return;
+                }
+                if (nx > cx - x && nx < cx + x && ny > cy - y && ny < cy + y) switch (type) {
+                case SMALL_OBJECT:
+                case SLOWDOWN_OBJECT:
+                case INTERACT_OBJECT:
+                case EFFECT_OBJECT:
+                case RIPPLE_OBJECT: break;
+                default: enemyStoped = true;
                 }
             }
         }
@@ -480,12 +515,36 @@ void drawFinishViewer(NVGcontext* ctx) {
     nvgText(ctx, centerX, centerY - 72, "GAME OVER!", NULL);
     nvgFontSize(ctx, 22);
     nvgText(ctx, centerX, centerY, "Press SPACE to start a new round.", NULL);
+
+    char str[100];
+    sprintf(str, "Your goal: %d", (int)(distance / 10.0) + hasDog * 1000 + coinCount * 2000 + power * 300);
+    nvgFontSize(ctx, 18);
+    nvgText(ctx, centerX, centerY + 30, str, NULL);
     
     nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, 200));
     nvgStrokeWidth(ctx, 2);
     nvgBeginPath(ctx);
     nvgRoundedRect(ctx, centerX - 148, centerY - 4, 73, 24, 3);
     nvgStroke(ctx);
+}
+
+void drawEnemy(NVGcontext* ctx) {
+    if (boardBrokenTimer) if (boardBrokenTimer < 59) boardBrokenTimer++;
+    if (++enemyTimer == 160) enemyTimer = 100;
+    if (enemyTimer < 100) return;
+    if (enemyY + 200 < distance) {
+        enemyX = enemyY = enemyTimer = 0;
+        enemyStoped = false;
+        return;
+    }
+    if (enemyStoped) drawImage(ctx, enemyImage, 1, 128, boardBrokenTimer / 10 * 128, 128, 128, enemyX - offset, enemyY - distance);
+    else {
+        float tx = offset + playerX - 64, ty = distance + playerY - 64;
+        if (ty - enemyY > 6.0F) enemyY += 4.24F;
+        enemyX += 2.0F * (enemyX > tx ? -1 : enemyX == tx ? 0 : 1);
+        if (enemyX - tx < 2.5F) enemyX = tx;
+    }
+    drawImage(ctx, enemyImage, 1, 0, ((enemyTimer - 100) / 10) * 128, 128, 128, enemyX - offset, enemyY - distance + 70);
 }
 
 void draw(NVGcontext* ctx) {
@@ -515,6 +574,7 @@ void draw(NVGcontext* ctx) {
     if (started) {
         generateObjects();
         drawObjects(ctx);
+        if (enemyTimer) drawEnemy(ctx);
         drawSurfer(ctx);
         drawNaughtySurfer(ctx);
         if (finished) drawFinishViewer(ctx);
