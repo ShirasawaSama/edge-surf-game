@@ -9,9 +9,11 @@
 #include "game.h"
 #include "miniaudio.h"
 
-int width, height;
+int width, height, fps;
+bool playPaused = false;
 
-void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+	if (playPaused) return;
 	ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
 	if (pDecoder != NULL) ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL, MA_TRUE);
 	(void)pInput;
@@ -30,7 +32,7 @@ int playMusic() {
 	deviceConfig.playback.format = decoder.outputFormat;
 	deviceConfig.playback.channels = decoder.outputChannels;
 	deviceConfig.sampleRate = decoder.outputSampleRate;
-	deviceConfig.dataCallback = data_callback;
+	deviceConfig.dataCallback = dataCallback;
 	deviceConfig.pUserData = &decoder;
 
 	if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
@@ -85,12 +87,15 @@ int main() {
 	int res = playMusic();
 	if (res != 0) return res;
 	printf("Loaded!\n");
+	double prevT = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
-		glClearColor(56.0F / 255, 194.0F / 255, 238.0F / 255, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		nvgBeginFrame(ctx, width, height, (float) width / (float) height);
+		double t = glfwGetTime();
+		fps = round(1.0 / (t - prevT));
+		prevT = t;
 		draw(ctx);
 		nvgEndFrame(ctx);
 		glfwSwapBuffers(window);

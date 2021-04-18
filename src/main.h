@@ -1,3 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
-int width, height;
+int width, height, fps;
+bool playPaused;

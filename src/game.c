@@ -12,19 +12,23 @@
 #include <math.h>
 
 const float SURFER_TOP = 0.33F;
+const int ANIMATION_TIMER_MAX_VALUE = 40, SETTING_WIDTH = 150;
 
-extern int width, height;
+extern bool playPaused;
+extern int width, height, fps;
 extern int backgroundImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage, naughtySurferImage, enemyImage;
 extern int objectHitBoxs[][2], objectTextures[10];
+
+double cursorX = 0, cursorY = 0;
 
 char username[100];
 int surfer = 0, initialSpeed = 4;
 
-bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped;
+bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped, slowMode = false, settingOpen = true;
 int surferAction, heart, power, coinCount;
 float distance, offset, speed, playerX, playerY, enemyX, enemyY;
 
-int invincibleTimer, fallTimer, boardTimer, flyingTimer, changeDirectionTimer, rushTimer, enemyTimer, boardBrokenTimer;
+int invincibleTimer, fallTimer, boardTimer, flyingTimer, changeDirectionTimer, rushTimer, enemyTimer, boardBrokenTimer, animationTimer;
 
 NaughtySurfer naughtySurfer = { 0, 2, 0, 0, false };
 CC_List *objects = NULL;
@@ -33,24 +37,31 @@ bool isInvincible() { return fallTimer || invincibleTimer; }
 
 bool isNaughtySurferExists() { return naughtySurfer.visible && naughtySurfer.action != 2; }
 
+float randomX() { return randomFloat() * width + offset; }
+float randomY() { return distance + height * (1 + randomFloat()); }
+
+void addObject(Object* obj) { cc_list_add(objects, obj); }
+
 void resetGame() {
     if (objects != NULL) cc_list_destroy(objects);
     cc_list_new(&objects);
     paused = true;
     finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = enemyStoped = false;
     heart = 3;
+    animationTimer = 1;
     distance = offset = speed = playerX = playerY = enemyX = enemyY = power = surferAction = rushTimer = invincibleTimer = fallTimer = boardTimer =
         flyingTimer = changeDirectionTimer = coinCount = enemyTimer = boardBrokenTimer = 0;
 }
 
 void stopPlayer() {
+    if (rushTimer) return;
     paused = true;
     speed = 0;
     surferAction = 0;
     rushTimer = 0;
 }
 
-static void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (!started) {
         if (action != GLFW_PRESS) return;
         switch (key) {
@@ -131,9 +142,27 @@ static void key(GLFWwindow* window, int key, int scancode, int action, int mods)
     (void)window;
 }
 
+void clickCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (action != GLFW_PRESS || button != GLFW_MOUSE_BUTTON_LEFT) return;
+    if (cursorX >= width - 36 && cursorY <= 50) settingOpen = !settingOpen;
+    if (!settingOpen || cursorX < width - SETTING_WIDTH - 16) return;
+    if (cursorY > 64 && cursorY < 80) playPaused = !playPaused;
+    else if (cursorY >= 80 && cursorY < 100) slowMode = !slowMode;
+    (void)window;
+    (void)mods;
+}
+
+void cursorCallback(GLFWwindow* window, double x, double y) {
+    cursorX = x;
+    cursorY = y;
+    return;
+}
+
 void initGame(NVGcontext* ctx, GLFWwindow* window) {
     loadResources(ctx);
-    glfwSetKeyCallback(window, key);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, clickCallback);
+    glfwSetCursorPosCallback(window, cursorCallback);
     resetGame();
     getUserName(username);
 }
@@ -165,6 +194,47 @@ void drawSurfer(NVGcontext* ctx) {
     }
 }
 
+void drawSettings(NVGcontext* ctx) {
+    nvgFillColor(ctx, nvgRGB(0, 0, 0));
+    nvgBeginPath(ctx);
+    nvgMoveTo(ctx, width - 36, 8);
+    nvgLineTo(ctx, width - 16, 8);
+    nvgMoveTo(ctx, width - 36, 16);
+    nvgLineTo(ctx, width - 16, 16);
+    nvgMoveTo(ctx, width - 36, 24);
+    nvgLineTo(ctx, width - 16, 24);
+    nvgStrokeWidth(ctx, 2);
+    nvgFill(ctx);
+
+    if (!settingOpen) return;
+
+    float left = width - SETTING_WIDTH - 16, top = 54;
+    nvgFillColor(ctx, nvgRGBA(255, 255, 255, 220));
+    nvgBeginPath(ctx);
+    nvgRoundedRect(ctx, left, top, SETTING_WIDTH, 104, 2);
+    nvgFill(ctx);
+
+    left += 10;
+
+    char str[100];
+    nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+    nvgFontSize(ctx, 16);
+    
+    nvgFillColor(ctx, playPaused ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
+    nvgText(ctx, left, top += 10, "Mute Music", NULL);
+    nvgFillColor(ctx, slowMode ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
+    nvgText(ctx, left, top += 20, "Slowdown Mode", NULL);
+
+    nvgFontSize(ctx, 14);
+    nvgFillColor(ctx, nvgRGBA(0, 0, 0, 170));
+    sprintf(str, "FPS: %d", fps);
+    nvgText(ctx, left, top += 20, str, NULL);
+
+    sprintf(str, "Objects: %d", (int) cc_list_size(objects));
+    nvgText(ctx, left, top += 16, str, NULL);
+    nvgText(ctx, left, top += 16, "By: Shirasawa", NULL);
+}
+
 void drawStatusBar(NVGcontext* ctx) {
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, width, 50);
@@ -176,6 +246,8 @@ void drawStatusBar(NVGcontext* ctx) {
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, width, 40);
     nvgFill(ctx);
+
+    drawSettings(ctx);
 
     float center = width / 2.0F;
 
@@ -237,14 +309,10 @@ void hitPlayer() {
     surferAction = 6;
     if (heart < 1) {
         finished = true;
+        animationTimer = 1;
         // http_post("http://127.0.0.1:1080", "", "");
     } else fallTimer = 1;
 }
-
-void addObject(Object* obj) { cc_list_add(objects, obj); }
-
-float randomX() { return randomFloat() * width + offset; }
-float randomY() { return distance + height * (1 + randomFloat()); }
 
 void generateObjects() {
     if (distance < height || paused) return;
@@ -323,6 +391,7 @@ void drawObjects(NVGcontext* ctx) {
                     if (obj->stage <= obj->maxStage * 14 + 80) obj->stage++;
                 } else if (++obj->stage > obj->maxStage * 14) obj->stage = 0;
             }
+            if (finished) continue;
             if (!flyingTimer && playerX > cx - x && playerX < cx + x && playerY > cy - y && playerY < cy + y) switch (type) {
             case INTERACT_OBJECT:
                 switch (obj->index) {
@@ -399,6 +468,7 @@ void drawObjects(NVGcontext* ctx) {
                 if (!isInvincible() && !flyingTimer && playerX > nx - 64 && playerX < nx + 64 && playerY > ny - 64 && playerY < ny + 64) {
                     kickDog();
                     paused = finished = enemyStoped = true;
+                    animationTimer = 1;
                     heart = speed = 0;
                     surferAction = 7;
                     boardBrokenTimer = 1;
@@ -466,10 +536,11 @@ void calcOffset() {
 }
 
 void drawStarterViewer(NVGcontext* ctx) {
+    float alpha = ((float)animationTimer) / ((float)ANIMATION_TIMER_MAX_VALUE);
     float center = width / 2.0F, oLeft = (width - 64) / 2.0F, left = oLeft - surfer * 84, top = height * SURFER_TOP;
     for (int i = 0; i < 8; i++, left += 84) drawSurferOrigin(ctx, i,
-        surfer == i ? 1 + (boardTimer >= 60 ? 4 - floor((boardTimer - 60) / 12.0) : floor(boardTimer / 12.0)) : 3, 1, left, top);
-    nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, 200));
+        surfer == i ? 1 + (boardTimer >= 60 ? 4 - floor((boardTimer - 60) / 12.0) : floor(boardTimer / 12.0)) : 3, alpha, left, top);
+    nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, alpha * 200));
     nvgStrokeWidth(ctx, 2);
 
     nvgBeginPath(ctx);
@@ -491,7 +562,7 @@ void drawStarterViewer(NVGcontext* ctx) {
     nvgStroke(ctx);
 
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-    nvgFillColor(ctx, nvgRGBA(0, 0, 0, 230));
+    nvgFillColor(ctx, nvgRGBA(0, 0, 0, alpha * 230));
     
     nvgFontSize(ctx, 22);
     char str[200];
@@ -507,13 +578,14 @@ void drawStarterViewer(NVGcontext* ctx) {
 }
 
 void drawFinishViewer(NVGcontext* ctx) {
+    float alpha = ((float) animationTimer) / ((float)ANIMATION_TIMER_MAX_VALUE);
     nvgBeginPath(ctx);
-    nvgFillColor(ctx, nvgRGBA(255, 255, 255, 190));
+    nvgFillColor(ctx, nvgRGBA(255, 255, 255, alpha * 190));
     nvgRect(ctx, 0, 0, width, height);
     nvgFill(ctx);
 
     nvgFontSize(ctx, 50);
-    nvgFillColor(ctx, nvgRGBA(0, 0, 0, 230));
+    nvgFillColor(ctx, nvgRGBA(0, 0, 0, alpha * 230));
 
     float centerX = width / 2.0F, centerY = height / 2.0F;
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
@@ -526,7 +598,7 @@ void drawFinishViewer(NVGcontext* ctx) {
     nvgFontSize(ctx, 18);
     nvgText(ctx, centerX, centerY + 30, str, NULL);
     
-    nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, 200));
+    nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, alpha * 200));
     nvgStrokeWidth(ctx, 2);
     nvgBeginPath(ctx);
     nvgRoundedRect(ctx, centerX - 148, centerY - 4, 73, 24, 3);
@@ -553,6 +625,7 @@ void drawEnemy(NVGcontext* ctx) {
 }
 
 void draw(NVGcontext* ctx) {
+    if (animationTimer) if (animationTimer < ANIMATION_TIMER_MAX_VALUE) animationTimer++;
     if (++boardTimer == 120) {
         srand((unsigned int)time(0));
         boardTimer = 0;
@@ -574,6 +647,11 @@ void draw(NVGcontext* ctx) {
             if (flyingTimer > 0) flyingTimer--;
         }
     }
+    nvgBeginPath(ctx);
+    float center = width / 2.0F;
+    nvgFillPaint(ctx, nvgLinearGradient(ctx, center, 0, center, height, nvgRGB(56, 194, 238), nvgRGB(46, 195, 208)));
+    nvgRect(ctx, 0, 0, width, height);
+    nvgFill(ctx);
     drawImage(ctx, backgroundImage, 1, (int)offset % 256, (int)distance % 256, width, height, 0, 0); // Background
 
     if (started) {
