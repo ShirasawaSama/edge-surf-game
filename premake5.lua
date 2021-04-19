@@ -1,3 +1,15 @@
+function builds()
+	language "C"
+	kind "StaticLib"
+	targetdir("build")
+	configuration "Debug"
+		defines { "DEBUG" }
+		symbols "On"
+	configuration "Release"
+		defines { "NDEBUG" }
+		optimize "On"
+end
+
 solution "edge-surf-game"
 	location ( "build" )
 	configurations { "Debug", "Release" }
@@ -6,40 +18,20 @@ solution "edge-surf-game"
 	defines { "NANOVG_GL3_IMPLEMENTATION", "GLEW_STATIC", "_CRT_SECURE_NO_WARNINGS" }
 
 	project "nanovg"
-		language "C"
-		kind "StaticLib"
 		includedirs { "nanovg/src" }
 		files { "nanovg/src/*.c" }
-		targetdir("build")
-
-		configuration "Debug"
-			defines { "DEBUG" }
-			symbols "On"
-
-		configuration "Release"
-			defines { "NDEBUG" }
-			optimize "On"
+		builds()
 
 	project "Collections-C"
-		language "C"
-		kind "StaticLib"
 		includedirs { "Collections-C/src/include" }
 		files { "Collections-C/src/*.c" }
-		targetdir("build")
-
-		configuration "Debug"
-			defines { "DEBUG" }
-			symbols "On"
-
-		configuration "Release"
-			defines { "NDEBUG" }
-			optimize "On"
+		builds()
 
 	project "edge-surf-game"
 		kind "ConsoleApp"
 		language "C"
 		files { "src/*.c" }
-		includedirs { "src", "nanovg/src", "Collections-C/src/include", "miniaudio", "http-client-c/src" }
+		includedirs { "src", "nanovg/src", "Collections-C/src/include", "miniaudio" }
 		targetdir("build")
 		links { "nanovg", "Collections-C" }
 
@@ -53,8 +45,8 @@ solution "edge-surf-game"
 			 defines { "NANOVG_GLEW" }
 
 		configuration { "macosx" }
-			links { "glfw3" }
-			linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit", "-framework CoreVideo", "-framework Carbon" }
+			buildoptions { "`pkg-config --cflags glfw3`" }
+			linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit", "-framework CoreVideo", "`pkg-config --libs glfw3`" }
 
 		configuration "Debug"
 			defines { "DEBUG" }

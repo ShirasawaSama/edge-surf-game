@@ -1,12 +1,6 @@
 #include "utils.h"
 #include <stdlib.h>
 #include <string.h>
-#if defined _WIN32
-#include <Windows.h>
-#elif defined linux
-#include <unistd.h>
-#include <pwd.h>
-#endif
 
 double randomDouble() {
 	return ((double) rand()) / ((double) RAND_MAX);
@@ -28,12 +22,13 @@ void drawImage(NVGcontext* vg, int image, float alpha, float sx, float sy, float
 	nvgFill(vg);
 }
 
-void getUserName(char* ch) {
+void openUrl() {
 #if defined _WIN32
-	DWORD len = 100;
-	GetUserNameA(ch, &len);
+	char command[] = "start https://github.com/ShirasawaSama/edge-surf-game";
 #elif defined linux
-	struct passwd* pwd = getpwuid(getid());
-	strcpy(ch, pwd->pw_name);
+	char command[] = "xdg-open https://github.com/ShirasawaSama/edge-surf-game";
+#else
+	char command[] = "open https://github.com/ShirasawaSama/edge-surf-game";
 #endif
+	system(command);
 }

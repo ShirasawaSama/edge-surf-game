@@ -55,7 +55,7 @@ int main() {
 		printf("Failed to init GLFW.");
 		return -1;
 	}
-	GLFWwindow* window = glfwCreateWindow(1000, 600, "Edge Surf Game", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1000, 800, "Edge Surf Game", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
