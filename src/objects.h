@@ -41,3 +41,4 @@ Object* makeInteractObject(float x, float y);
 Object* makeInteractObjectWithIndex(float x, float y, int index);
 Object* makeEffectObject(float x, float y, int index);
 void makeDocksObject(float x, float y, CC_List* list, bool hasTop);
+void makeStarterObject(float width, float height, CC_List* list);

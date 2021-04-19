@@ -155,3 +155,52 @@ void makeDocksObject(float x, float y, CC_List* list, bool hasTop) {
 		if (!hasTop) makeDockOnTop(x, y, list, false);
 	}
 }
+
+void makeStarterObject(float width, float height, CC_List* list) {
+	float centerX = width / 2.0F, centerY = height / 2.0F + 64;
+
+	cc_list_add(list, makeInteractObjectWithIndex(centerX - 64 - 20, centerY, 3));
+	cc_list_add(list, makeInteractObjectWithIndex(centerX, centerY, 2));
+
+	float x = centerX - 64 * 6, y = centerY + 128;
+
+	for (int i = 10 + randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+	for (int i = 5 + randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+	for (int i = 3 + randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+
+	makeDockOnTop(x, y, list, true);
+	makeDockObject(list, x, y, 0);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 8);
+	makeDockObject(list, x += 64, y, 2);
+
+	x = centerX + 96;
+
+	for (int i = 10 + randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+	for (int i = 5 + randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+	for (int i = 3 + randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+
+	makeDockObject(list, x, y, 0);
+	makeDockObject(list, x += 64, y, 9);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 2);
+	makeDockOnTop(x, y, list, true);
+
+	x = centerX - 64 * 8.5F;
+	y = centerY;
+	makeDockOnTop(x, y, list, true);
+	makeDockObject(list, x, y, 0);
+	makeDockObject(list, x += 64, y, 9);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 2);
+
+	x = centerX + 64 * 3;
+
+	makeDockObject(list, x, y, 0);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 8);
+	makeDockObject(list, x += 64, y, 1);
+	makeDockObject(list, x += 64, y, 2);
+	makeDockOnTop(x, y, list, true);
+}

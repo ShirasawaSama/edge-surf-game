@@ -24,7 +24,7 @@ double cursorX = 0, cursorY = 0;
 int scores[10];
 int surfer = 0, initialSpeed = 4;
 
-bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped, slowMode = false, settingOpen = false;
+bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped, settingOpen = false;
 int surferAction, heart, power, coinCount, randomSeed;
 float distance, offset, speed, playerX, playerY, enemyX, enemyY;
 
@@ -95,6 +95,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         switch (key) {
         case GLFW_KEY_SPACE:
             if (randomSeed) srand(randomSeed);
+            makeStarterObject(width, height, objects);
             started = true;
             break;
         case GLFW_KEY_LEFT:
@@ -186,7 +187,7 @@ void clickCallback(GLFWwindow* window, int button, int action, int mods) {
     if (cursorX >= width - 36 && cursorY <= 50) settingOpen = !settingOpen;
     if (!settingOpen || cursorX < width - SETTING_WIDTH - 16) return;
     if (cursorY > 64 && cursorY < 80) playPaused = !playPaused;
-    else if (cursorY >= 80 && cursorY < 100) slowMode = !slowMode;
+    else if (cursorY >= 80 && cursorY < 100) initialSpeed = initialSpeed == 4 ? 2 : 4;
     else if (cursorY >= 100 && cursorY < 120) { if (started && !finished) resetGame();  }
     else if (cursorY >= 120 && cursorY < 174) openUrl();
     (void)window;
@@ -262,7 +263,7 @@ void drawSettings(NVGcontext* ctx) {
     
     nvgFillColor(ctx, playPaused ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
     nvgText(ctx, left, top += 10, "Mute Music", NULL);
-    nvgFillColor(ctx, slowMode ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
+    nvgFillColor(ctx, initialSpeed == 2 ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
     nvgText(ctx, left, top += 20, "Slowdown Mode", NULL);
     nvgFillColor(ctx, nvgRGBA(0, 0, 0, !started || finished ? 150 : 220));
     nvgText(ctx, left, top += 20, "Restart Game", NULL);
@@ -357,15 +358,16 @@ void hitPlayer() {
 }
 
 void generateObjects() {
-    if (distance < height || paused) return;
+    if (paused) return;
     int dis = (int)distance;
-    float chanceModify = ((int) (distance / 1000)) * 0.03F;
+    bool isFar = dis > 10000;
+    float chanceModify = ((int) (distance / 10000)) * 0.03F;
     if (chanceModify > 0.16F) chanceModify = 0.16F;
     if (dis % 73 <= speed && randomFloat() > 0.45F - chanceModify) addObject(makeSmallObject(randomX(), randomY()));
     if (dis % 44 <= speed && randomFloat() > 0.65F - chanceModify) addObject(makeSlowdownObject(randomX(), randomY()));
     if (dis % 133 <= speed && randomFloat() > 0.93F - chanceModify) addObject(makeAmbientObject(randomX(), randomY()));
     if (dis % 633 <= speed && randomFloat() > 0.5F - chanceModify) makeDocksObject(randomX(), randomY(), objects, false);
-    if (dis % (height * 3) <= speed && randomFloat() > 0.9) { // Island
+    if (isFar && dis % (height * 3) <= speed && randomFloat() > 0.9) { // Island
         float x = randomX(), y = randomY();
         addObject(makeIslandObject(x, y));
         addObject(makeInteractObjectWithIndex(x + 620, y + 94, 0));
@@ -386,11 +388,11 @@ void generateObjects() {
         addObject(makeSandBarObject(x, y));
         if (randomFloat() > 0.7F) makeDocksObject(x + randomFloat() * 198, y + 128, objects, true);
     }
-    if (dis % 589 <= speed && randomFloat() > 0.9F) {
+    if (isFar && dis % 589 <= speed && randomFloat() > 0.9F) {
         addObject(makeEffectObject(randomX(), randomY(), 1));
         addObject(makeEffectObject(randomX(), randomY(), 1));
     }
-    if (dis % 512 <= speed && randomFloat() > 0.9F - chanceModify) {
+    if (isFar && dis % 512 <= speed && randomFloat() > 0.9F - chanceModify) {
         double x = randomX(), y = randomY();
         addObject(makeBigObjectWithIndex(x + 150, y + 150, 25));
         for (int i = 1 + randomFloat() * 3; i-- >= 0;) addObject(makeInteractObjectWithIndex(x + randomFloat() * 300, y + randomFloat() * 300, 1));
@@ -530,7 +532,7 @@ void drawObjects(NVGcontext* ctx) {
 }
 
 void drawNaughtySurfer(NVGcontext* ctx) {
-    if (randomDouble() > 0.9995) {
+    if (distance > 1000 && randomDouble() > 0.9995) {
         if (!naughtySurfer.visible) {
             naughtySurfer.y = distance + 5;
             naughtySurfer.x = width * randomFloat() + offset;
@@ -699,9 +701,10 @@ void drawCheatWarning(NVGcontext* ctx) {
     nvgRoundedRect(ctx, left, SETTING_TOP, width, 60, 2);
     nvgFill(ctx);
 
+    nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
     nvgFillColor(ctx, nvgRGBA(255, 255, 255, 230));
     nvgFontSize(ctx, 15);
-    nvgTextBox(ctx, left + 12, SETTING_TOP + 20, width - 10, "Cheat code activated! Your score will not be saved this round!", NULL);
+    nvgTextBox(ctx, left + 12, SETTING_TOP + 10, width - 10, "Cheat code activated! Your score will not be saved this round!", NULL);
 }
 
 void draw(NVGcontext* ctx) {
