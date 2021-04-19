@@ -15,7 +15,7 @@ enum ObjectType {
 	DOCK_OBJECT
 };
 
-int objectHitBoxs[][2];
+extern int objectHitBoxs[10][2];
 
 typedef struct Object {
 	int type, index, stage, maxStage;

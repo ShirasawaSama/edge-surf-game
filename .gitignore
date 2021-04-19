@@ -23,6 +23,7 @@ Thumbs.db
 
 ## Build dir
 build
+premake5
 
 ## xcode specific
 *xcuserdata*

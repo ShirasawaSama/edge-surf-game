@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-int objectHitBoxs[][2] = { {32, 32}, {64, 64}, {64, 64}, {96, 96}, {64, 64}, {256, 128}, { 1280, 512 }, { 64, 64 }, { 128, 128 }, { 64, 64 } };
+int objectHitBoxs[10][2] = { {32, 32}, {64, 64}, {64, 64}, {96, 96}, {64, 64}, {256, 128}, { 1280, 512 }, { 64, 64 }, { 128, 128 }, { 64, 64 } };
 
 Object* makeSmallObjectWithIndex(float x, float y, int index) {
 	Object* obj = (Object*)malloc(sizeof(Object));

@@ -36,13 +36,13 @@ solution "edge-surf-game"
 		links { "nanovg", "Collections-C" }
 
 		configuration { "linux" }
-			 linkoptions { "`pkg-config --libs glfw3`" }
-			 links { "GL", "GLU", "m", "GLEW" }
-			 defines { "NANOVG_GLEW" }
+			linkoptions { "`pkg-config --libs glfw3`", "-ldl", "-pthread" }
+			links { "GL", "GLU", "m", "GLEW" }
+			defines { "NANOVG_GLEW" }
 
 		configuration { "windows" }
-			 links { "glfw3", "gdi32", "winmm", "user32", "GLEW", "glu32","opengl32", "kernel32" }
-			 defines { "NANOVG_GLEW" }
+			links { "glfw3", "gdi32", "winmm", "user32", "GLEW", "glu32","opengl32", "kernel32" }
+			defines { "NANOVG_GLEW" }
 
 		configuration { "macosx" }
 			buildoptions { "`pkg-config --cflags glfw3`" }

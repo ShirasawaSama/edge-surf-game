@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  BUILD_TYPE: release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup premake
+      uses: @abel0b/setup-premake@v1
+
+    - name: Install required packages
+      run: sudo apt-get install build-essential libglfw3-dev libglew-dev pkg-config
+
+    - name: Premake
+      run: premake5 gmake
+
+    - name: Make
+      run: cd build && make edge-surf-game
+
+    - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/edge-surf-game
+          asset_name: edge-surf-game-linux
+          tag: ${{ github.ref }}

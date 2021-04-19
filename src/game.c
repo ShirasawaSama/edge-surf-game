@@ -48,8 +48,8 @@ void addObject(Object* obj) { cc_list_add(objects, obj); }
 
 void refreshScore() {
     FILE* fp = NULL;
-    if (fopen_s(&fp, "scores.txt", "a+") || !fp) return;
-    for (int i = 0; i < 10; i++) fscanf_s(fp, "%d", scores + i);
+    if (!(fp = fopen("scores.txt", "a+"))) return;
+    for (int i = 0; i < 10 && fscanf(fp, "%d", scores + i) != EOF; i++);
     fclose(fp);
     if (isNotRecordScore()) return;
     int score = getScore();
@@ -61,7 +61,7 @@ void refreshScore() {
             sprintf(tmp, "%d ", scores[i]);
             strcat(data, tmp);
         }
-        if (fopen_s(&fp, "scores.txt", "w") || !fp) return;
+        if (!(fp = fopen("scores.txt", "w"))) return;
         fputs(data, fp);
         fclose(fp);
     }
@@ -406,7 +406,7 @@ void drawObjects(NVGcontext* ctx) {
     CC_ListIter iter;
     cc_list_iter_init(&iter, objects);
     Object *obj = NULL;
-    while (cc_list_iter_next(&iter, &obj) != CC_ITER_END) {
+    while (cc_list_iter_next(&iter, (void**)&obj) != CC_ITER_END) {
         int type = obj->type, boxX = objectHitBoxs[type][0], boxY = objectHitBoxs[type][1];
         if (obj->y + boxY < distance) {
             cc_list_iter_remove(&iter, NULL);
@@ -470,7 +470,7 @@ void drawObjects(NVGcontext* ctx) {
                     CC_ListIter iter2;
                     cc_list_iter_init(&iter2, objects);
                     Object* obj2 = NULL;
-                    while (cc_list_iter_next(&iter2, &obj2) != CC_ITER_END) if (obj2->type == EFFECT_OBJECT && obj2 != obj && obj2->index == 1) {
+                    while (cc_list_iter_next(&iter2, (void**)&obj2) != CC_ITER_END) if (obj2->type == EFFECT_OBJECT && obj2 != obj && obj2->index == 1) {
                         obj->index = obj2->index = 0;
                         invincibleTimer = 150;
                         offset = obj2->x - playerX + 32;
@@ -574,10 +574,12 @@ void calcOffset() {
     case 4: ratio = 0.2F;
     }
     offset += ratio * speed;
-    if (rushTimer) if (rushTimer >= 600) {
-        rushTimer = 0;
-        speed = initialSpeed;
-    } else rushTimer++;
+    if (rushTimer) {
+        if (rushTimer >= 600) {
+            rushTimer = 0;
+            speed = initialSpeed;
+        } else rushTimer++;
+    }
     if (speed < initialSpeed) speed *= 1.01F;
 }
 
