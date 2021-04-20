@@ -21,10 +21,14 @@ extern int objectHitBoxs[][2], objectTextures[10];
 
 double cursorX = 0, cursorY = 0;
 
-int scores[10];
+struct Score {
+    int score;
+    char username[30];
+} scores[10];
+char username[30];
 int surfer = 0, initialSpeed = 4;
 
-bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped, settingOpen = false;
+bool paused, finished, unlimitedHearts, unlimitedPower, hasDog, started, enemyStoped, editMode, settingOpen = false;
 int surferAction, heart, power, coinCount, randomSeed;
 float distance, offset, speed, playerX, playerY, enemyX, enemyY;
 
@@ -42,26 +46,28 @@ int getScore() { return (int)(distance / 10.0F) + hasDog * 1000 + coinCount * 20
 float randomX() { return randomFloat() * width + offset; }
 float randomY() { return distance + height * (1 + randomFloat()); }
 
-int comp(const void* a, const void* b) { return *(int*)b - *(int*)a; }
+int comp(const void* a, const void* b) { return ((struct Score*)b)->score - ((struct Score*)a)->score; }
 
 void addObject(Object* obj) { cc_list_add(objects, obj); }
 
 void refreshScore() {
-    FILE* fp = NULL;
-    if (!(fp = fopen("scores.txt", "a+"))) return;
-    for (int i = 0; i < 10 && fscanf(fp, "%d", scores + i) != EOF; i++);
+    FILE* fp = fopen("scores.txt", "a+");
+    if (!fp) return;
+    for (int i = 0; i < 10 && fscanf(fp, "%d %s", &scores[i].score, scores[i].username) != EOF; i++);
     fclose(fp);
     if (isNotRecordScore()) return;
     int score = getScore();
-    if (score > scores[9]) {
-        scores[9] = score;
-        qsort(scores, 10, sizeof(int), comp);
-        char data[100] = { 0 }, tmp[100];
+    if (score > scores[9].score) {
+        scores[9].score = score;
+        strcpy(scores[9].username, username);
+        qsort(scores, 10, sizeof(struct Score), comp);
+        char data[500] = { 0 }, tmp[100];
         for (int i = 0; i < 10; i++) {
-            sprintf(tmp, "%d ", scores[i]);
+            sprintf(tmp, "%d %s\n", scores[i].score, scores[i].username);
             strcat(data, tmp);
         }
-        if (!(fp = fopen("scores.txt", "w"))) return;
+        fp = fopen("scores.txt", "w");
+        if (!fp) return;
         fputs(data, fp);
         fclose(fp);
     }
@@ -76,7 +82,7 @@ void resetGame() {
     srand((int)time(NULL));
     for (int i = rand() % 10; i-- > 0;) srand(rand());
     randomSeed = rand();
-    finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = enemyStoped = false;
+    finished = unlimitedHearts = unlimitedPower = hasDog = naughtySurfer.visible = started = enemyStoped = editMode = false;
     distance = offset = speed = playerX = playerY = enemyX = enemyY = power = surferAction = rushTimer = invincibleTimer = fallTimer = boardTimer =
         flyingTimer = changeDirectionTimer = coinCount = enemyTimer = boardBrokenTimer = cheatWarningTimer = 0;
 }
@@ -92,11 +98,27 @@ void stopPlayer() {
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (!started) {
         if (action != GLFW_PRESS) return;
+        if (editMode) {
+            int len = (int) strlen(username);
+            if (key == GLFW_KEY_BACKSPACE) {
+                if (len) username[len - 1] = 0;
+                return;
+            }
+            if (len >= 30) return;
+            if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z) {
+                username[len] = key - (isCapsLockHold(mods) ? 0 : 'A' - 'a');
+                return;
+            } else if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
+                username[len] = key;
+                return;
+            }
+        }
         switch (key) {
         case GLFW_KEY_SPACE:
             if (randomSeed) srand(randomSeed);
             makeStarterObject(width, height, objects);
             started = true;
+            editMode = false;
             break;
         case GLFW_KEY_LEFT:
         case GLFW_KEY_A:
@@ -177,7 +199,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
             surferAction = 3;
         }
     }
-    (void)mods;
     (void)scancode;
     (void)window;
 }
@@ -185,7 +206,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void clickCallback(GLFWwindow* window, int button, int action, int mods) {
     if (action != GLFW_PRESS || button != GLFW_MOUSE_BUTTON_LEFT) return;
     if (cursorX >= width - 36 && cursorY <= 50) settingOpen = !settingOpen;
-    if (!settingOpen || cursorX < width - SETTING_WIDTH - 16) return;
+    if (!settingOpen || cursorX < width - SETTING_WIDTH - 16) {
+        if (cursorY >= height - 90 && cursorY <= height - 70) editMode = !editMode;
+        return;
+    }
     if (cursorY > 64 && cursorY < 80) playPaused = !playPaused;
     else if (cursorY >= 80 && cursorY < 100) initialSpeed = initialSpeed == 4 ? 2 : 4;
     else if (cursorY >= 100 && cursorY < 120) { if (started && !finished) resetGame();  }
@@ -205,6 +229,7 @@ void initGame(NVGcontext* ctx, GLFWwindow* window) {
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, clickCallback);
     glfwSetCursorPosCallback(window, cursorCallback);
+    getUserName(username);
     resetGame();
 }
 
@@ -612,10 +637,6 @@ void drawStarterViewer(NVGcontext* ctx) {
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
     nvgFillColor(ctx, nvgRGBA(0, 0, 0, alpha * 230));
     
-    nvgFontSize(ctx, 22);
-    char str[200];
-    sprintf(str, "Random seed: %d", randomSeed);
-    nvgText(ctx, center, height - 60, str, NULL);
 
     nvgFontSize(ctx, 50);
     nvgText(ctx, center, top - 100, "LET'S SURF!", NULL);
@@ -623,6 +644,14 @@ void drawStarterViewer(NVGcontext* ctx) {
     nvgFontSize(ctx, 20);
     nvgText(ctx, center, top + 90, "A D TO SWITCH SURFER", NULL);
     nvgText(ctx, center, top + 130, "SPACEBAR TO GO SURFING!", NULL);
+
+    nvgFontSize(ctx, 22);
+    char str[200];
+    sprintf(str, "Random seed: %d", randomSeed);
+    nvgText(ctx, center, height - 60, str, NULL);
+    if (editMode) nvgFillColor(ctx, nvgRGB(233, 30, 99));
+    sprintf(str, "Hello, %s!", username);
+    nvgText(ctx, center, height - 90, str, NULL);
 }
 
 void drawFinishViewer(NVGcontext* ctx) {
@@ -643,28 +672,28 @@ void drawFinishViewer(NVGcontext* ctx) {
 
     int score = getScore();
     nvgFontSize(ctx, 18);
-    nvgText(ctx, centerX, textTop, "Your scores:", NULL);
+    nvgText(ctx, centerX, textTop, "------- Scores -------", NULL);
     textTop += 10;
 
     nvgFontSize(ctx, 16);
     char str[100];
     bool flag = true;
     for (int i = 0; i < 10; i++) {
-        if (!scores[i]) return;
+        if (!scores[i].score) return;
         textTop += 20;
-        if (flag && !isNotRecordScore() && scores[i] == score) {
+        if (flag && !isNotRecordScore() && scores[i].score == score && !strcmp(username, scores[i].username)) {
             nvgFillColor(ctx, nvgRGBA(233, 30, 99, alpha * 255));
-            sprintf(str, "%d (NEW RECORD!)", score);
+            sprintf(str, i ? "%s: %d" : "%s: %d (NEW RECORD!)", username, score);
             flag = false;
         } else {
             nvgFillColor(ctx, nvgRGBA(0, 0, 0, alpha * 200));
-            sprintf(str, "%d", scores[i]);
+            sprintf(str, "%s: %d", scores[i].username, scores[i].score);
         }
         nvgText(ctx, centerX, textTop, str, NULL);
     }
     if (flag) {
         nvgFillColor(ctx, nvgRGBA(233, 30, 99, alpha * 255));
-        sprintf(str, isNotRecordScore() ? "%d (NOT RECORDED)" : "%d", score);
+        sprintf(str, isNotRecordScore() ? "%s %d (NOT RECORDED)" : "%s %d", username, score);
         nvgText(ctx, centerX, textTop + 20, str, NULL);
     }
 
@@ -697,16 +726,16 @@ void drawEnemy(NVGcontext* ctx) {
 void drawCheatWarning(NVGcontext* ctx) {
     if (!cheatWarningTimer) return;
     if (cheatWarningTimer < ANIMATION_TIMER_MAX_VALUE) cheatWarningTimer++;
-    float width = SETTING_WIDTH * 1.47F, left = -(1.0F - ((float)cheatWarningTimer) / ((float)ANIMATION_TIMER_MAX_VALUE)) * width - 3;
+    float w = SETTING_WIDTH * 1.47F, left = -(1.0F - ((float)cheatWarningTimer) / ((float)ANIMATION_TIMER_MAX_VALUE)) * w - 3;
     nvgFillColor(ctx, nvgRGBA(0, 0, 0, 170));
     nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, left, SETTING_TOP, width, 60, 2);
+    nvgRoundedRect(ctx, left, SETTING_TOP, w, 60, 2);
     nvgFill(ctx);
 
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
     nvgFillColor(ctx, nvgRGBA(255, 255, 255, 230));
     nvgFontSize(ctx, 15);
-    nvgTextBox(ctx, left + 12, SETTING_TOP + 10, width - 10, "Cheat code activated! Your score will not be saved this round!", NULL);
+    nvgTextBox(ctx, left + 12, SETTING_TOP + 10, w - 10, "Cheat code activated! Your score will not be saved this round!", NULL);
 }
 
 void draw(NVGcontext* ctx) {

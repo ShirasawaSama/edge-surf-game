@@ -1,7 +1,9 @@
-#pragma warning(disable:4244)
 #define MINIAUDIO_IMPLEMENTATION
 #include <stdio.h>
 #include <GL/glew.h>
+#ifdef __APPLE__
+#define GLFW_INCLUDE_GLCOREARB
+#endif
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
 #include "nanovg_gl.h"
@@ -92,9 +94,9 @@ int main() {
 		glfwGetWindowSize(window, &width, &height);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		nvgBeginFrame(ctx, width, height, (float) width / (float) height);
+		nvgBeginFrame(ctx, (float)width, (float)height, (float) width / (float) height);
 		double t = glfwGetTime();
-		fps = round(1.0 / (t - prevT));
+		fps = (int) round(1.0 / (t - prevT));
 		prevT = t;
 		draw(ctx);
 		nvgEndFrame(ctx);
