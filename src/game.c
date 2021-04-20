@@ -12,9 +12,9 @@
 #include <math.h>
 
 const float SURFER_TOP = 0.33F;
-const int ANIMATION_TIMER_MAX_VALUE = 40, SETTING_WIDTH = 150, SETTING_TOP = 54;
+const int ANIMATION_TIMER_MAX_VALUE = 40, SETTING_WIDTH = 150, SETTING_TOP = 64;
 
-extern bool playPaused;
+extern bool playPaused, vSync;
 extern int width, height, fps;
 extern int backgroundImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage, naughtySurferImage, enemyImage;
 extern int objectHitBoxs[][2], objectTextures[10];
@@ -77,7 +77,7 @@ void resetGame() {
     if (objects != NULL) cc_list_destroy(objects);
     cc_list_new(&objects);
     paused = true;
-    heart = 3;
+    heart = 1;
     animationTimer = 1;
     srand((int)time(NULL));
     for (int i = rand() % 10; i-- > 0;) srand(rand());
@@ -212,8 +212,9 @@ void clickCallback(GLFWwindow* window, int button, int action, int mods) {
     }
     if (cursorY > 64 && cursorY < 80) playPaused = !playPaused;
     else if (cursorY >= 80 && cursorY < 100) initialSpeed = initialSpeed == 4 ? 2 : 4;
-    else if (cursorY >= 100 && cursorY < 120) { if (started && !finished) resetGame();  }
-    else if (cursorY >= 120 && cursorY < 174) openUrl();
+    else if (cursorY >= 100 && cursorY < 130) glfwSwapInterval(vSync = !vSync);
+    else if (cursorY >= 130 && cursorY < 150) { if (started && !finished) resetGame(); }
+    else if (cursorY >= 150 && cursorY < 194) openUrl();
     (void)window;
     (void)mods;
 }
@@ -263,12 +264,12 @@ void drawSurfer(NVGcontext* ctx) {
 void drawSettings(NVGcontext* ctx) {
     nvgFillColor(ctx, nvgRGB(0, 0, 0));
     nvgBeginPath(ctx);
-    nvgMoveTo(ctx, width - 36, 8);
-    nvgLineTo(ctx, width - 16, 8);
-    nvgMoveTo(ctx, width - 36, 16);
-    nvgLineTo(ctx, width - 16, 16);
-    nvgMoveTo(ctx, width - 36, 24);
-    nvgLineTo(ctx, width - 16, 24);
+    nvgMoveTo(ctx, width - 36, 15);
+    nvgLineTo(ctx, width - 16, 15);
+    nvgMoveTo(ctx, width - 36, 23);
+    nvgLineTo(ctx, width - 16, 23);
+    nvgMoveTo(ctx, width - 36, 31);
+    nvgLineTo(ctx, width - 16, 31);
     nvgStrokeWidth(ctx, 2);
     nvgFill(ctx);
 
@@ -277,7 +278,7 @@ void drawSettings(NVGcontext* ctx) {
     float left = width - SETTING_WIDTH - 16, top = SETTING_TOP - 2;
     nvgFillColor(ctx, nvgRGBA(255, 255, 255, 220));
     nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, left, SETTING_TOP, SETTING_WIDTH, 120, 2);
+    nvgRoundedRect(ctx, left, SETTING_TOP, SETTING_WIDTH, 140, 2);
     nvgFill(ctx);
 
     left += 10;
@@ -290,6 +291,8 @@ void drawSettings(NVGcontext* ctx) {
     nvgText(ctx, left, top += 10, "Mute Music", NULL);
     nvgFillColor(ctx, initialSpeed == 2 ? nvgRGB(233, 30, 99) : nvgRGBA(0, 0, 0, 220));
     nvgText(ctx, left, top += 20, "Slowdown Mode", NULL);
+    nvgFillColor(ctx, vSync ? nvgRGBA(0, 0, 0, 220) : nvgRGB(233, 30, 99));
+    nvgText(ctx, left, top += 20, "Disable vSync", NULL);
     nvgFillColor(ctx, nvgRGBA(0, 0, 0, !started || finished ? 150 : 220));
     nvgText(ctx, left, top += 20, "Restart Game", NULL);
 
@@ -305,14 +308,14 @@ void drawSettings(NVGcontext* ctx) {
 
 void drawStatusBar(NVGcontext* ctx) {
     nvgBeginPath(ctx);
-    nvgRect(ctx, 0, 0, width, 50);
+    nvgRect(ctx, 0, 0, width, 60);
     nvgPathWinding(ctx, NVG_HOLE);
-    nvgFillPaint(ctx, nvgBoxGradient(ctx, -5, 0, width + 15, 45, 6, 10, nvgRGBA(0, 0, 0, 60), nvgRGBA(0, 0, 0, 0)));
+    nvgFillPaint(ctx, nvgBoxGradient(ctx, -5, 0, width + 15, 55, 6, 10, nvgRGBA(0, 0, 0, 60), nvgRGBA(0, 0, 0, 0)));
     nvgFill(ctx);
 
     nvgFillColor(ctx, nvgRGB(255, 255, 255));
     nvgBeginPath(ctx);
-    nvgRect(ctx, 0, 0, width, 40);
+    nvgRect(ctx, 0, 0, width, 50);
     nvgFill(ctx);
 
     drawSettings(ctx);
@@ -324,35 +327,35 @@ void drawStatusBar(NVGcontext* ctx) {
     nvgFillColor(ctx, nvgRGBA(0, 0, 0, 230));
     char str[100];
     sprintf(str, "%d M", (int)(distance / 10.0));
-    nvgText(ctx, center, 25, str, NULL);
+    nvgText(ctx, center, 35, str, NULL);
 
     if (unlimitedHearts) {
-        drawImage(ctx, interfaceImage, 1, 0, 49, 24, 24, center - 105, 3);
-        drawImage(ctx, interfaceImage, 1, 24, 0, 24, 24, center - 130, 3);
+        drawImage(ctx, interfaceImage, 1, 0, 49, 24, 24, center - 105, 13);
+        drawImage(ctx, interfaceImage, 1, 24, 0, 24, 24, center - 130, 13);
     } else {
         float left = center - 80;
-        for (int i = 3 - heart; i-- > 0;) drawImage(ctx, interfaceImage, 1, 0, 0, 24, 24, left -= 25, 3);
-        for (int i = heart; i-- > 0;) drawImage(ctx, interfaceImage, 1, 24, 0, 24, 24, left -= 25, 3);
+        for (int i = 3 - heart; i-- > 0;) drawImage(ctx, interfaceImage, 1, 0, 0, 24, 24, left -= 25, 13);
+        for (int i = heart; i-- > 0;) drawImage(ctx, interfaceImage, 1, 24, 0, 24, 24, left -= 25, 13);
     }
     if (unlimitedPower) {
-        drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, center + 75, 3);
-        drawImage(ctx, interfaceImage, 1, 0, 49, 24, 24, center + 100, 3);
+        drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, center + 75, 13);
+        drawImage(ctx, interfaceImage, 1, 0, 49, 24, 24, center + 100, 13);
     } else {
         float left = center + 56;
-        for (int i = power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, left += 25, 3);
-        for (int i = 3 - power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 0, 24, 24, 24, left += 25, 3);
+        for (int i = power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 24, 24, 24, 24, left += 25, 13);
+        for (int i = 3 - power; i-- > 0;) drawImage(ctx, interfaceImage, 1, 0, 24, 24, 24, left += 25, 13);
     }
     float left = 10;
     if (hasDog) {
-        drawImage(ctx, interfaceImage, 1, 24, 48, 24, 24, left, 4);
+        drawImage(ctx, interfaceImage, 1, 24, 48, 24, 24, left, 14);
         left += 25;
     }
     if (coinCount) {
-        drawImage(ctx, interfaceImage, 1, 24, 72, 24, 24, left, 5);
+        drawImage(ctx, interfaceImage, 1, 24, 72, 24, 24, left, 15);
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
         nvgFillColor(ctx, nvgRGBA(0, 0, 0, 230));
         sprintf(str, "x%d", coinCount);
-        nvgText(ctx, left += 27, 27, str, NULL);
+        nvgText(ctx, left += 27, 37, str, NULL);
     }
 }
 
@@ -398,7 +401,7 @@ void generateObjects() {
         addObject(makeInteractObjectWithIndex(x + 620, y + 94, 0));
         addObject(makeEffectObject(x + 800, y + 140, 5));
     }
-    if (dis % 175 <= speed && randomFloat() > 0.5F) { // Interact
+    if (dis % 175 <= speed && randomFloat() > 0.7F) { // Interact
         double x = randomX(), y = randomY();
         addObject(makeRippleObject(x - 16, y - 18));
         addObject(makeInteractObject(x, y));
@@ -672,8 +675,7 @@ void drawFinishViewer(NVGcontext* ctx) {
 
     int score = getScore();
     nvgFontSize(ctx, 18);
-    nvgText(ctx, centerX, textTop, "------- Scores -------", NULL);
-    textTop += 10;
+    nvgText(ctx, centerX, textTop += 10, "------- Scores -------", NULL);
 
     nvgFontSize(ctx, 16);
     char str[100];
@@ -700,7 +702,7 @@ void drawFinishViewer(NVGcontext* ctx) {
     nvgStrokeColor(ctx, nvgRGBA(0, 0, 0, alpha * 200));
     nvgStrokeWidth(ctx, 2);
     nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, centerX - 168, centerY - 4, 115, 24, 3);
+    nvgRoundedRect(ctx, centerX - 164, centerY - 4, 115, 24, 3);
     nvgStroke(ctx);
 }
 
@@ -716,7 +718,7 @@ void drawEnemy(NVGcontext* ctx) {
     if (enemyStoped) drawImage(ctx, enemyImage, 1, 128, boardBrokenTimer / 10 * 128, 128, 128, enemyX - offset, enemyY - distance);
     else {
         float tx = offset + playerX - 64, ty = distance + playerY - 64;
-        if (ty - enemyY > 6) enemyY += 4.16F;
+        if (ty - enemyY > 6) enemyY += 4.2F;
         enemyX += 2.0F * (enemyX > tx ? -1 : enemyX == tx ? 0 : 1);
         if (enemyX - tx < 2.5F) enemyX = tx;
     }

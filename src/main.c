@@ -12,7 +12,7 @@
 #include "miniaudio.h"
 
 int width, height, fps;
-bool playPaused = false;
+bool playPaused = false, vSync = true;
 
 void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
 	if (playPaused) return;
@@ -52,13 +52,17 @@ int playMusic() {
 	return 0;
 }
 
+void onError(int code, const char* message) { printf("Code: %d, %s\n", code, message); }
+
 int main() {
+	glfwSetErrorCallback(onError);
 	if (!glfwInit()) {
 		printf("Failed to init GLFW.");
 		return -1;
 	}
 	GLFWwindow* window = glfwCreateWindow(1200, 800, "Edge Surf Game", NULL, NULL);
 	if (!window) {
+		printf("Cannot create window.");
 		glfwTerminate();
 		return -1;
 	}
@@ -85,23 +89,26 @@ int main() {
 		printf("Could not init nanovg.\n");
 		return -1;
 	}
+	glfwSwapInterval(vSync);
 	initGame(ctx, window);
 	int res = playMusic();
 	if (res != 0) return res;
 	printf("Loaded!\n");
+	glfwSetTime(0);
 	double prevT = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
 		glfwGetWindowSize(window, &width, &height);
-		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		nvgBeginFrame(ctx, (float)width, (float)height, (float) width / (float) height);
-		double t = glfwGetTime();
-		fps = (int) round(1.0 / (t - prevT));
-		prevT = t;
-		draw(ctx);
-		nvgEndFrame(ctx);
-		glfwSwapBuffers(window);
 		glfwPollEvents();
+		double t = glfwGetTime();
+		fps = (int)round(1.0 / (t - prevT));
+		if (vSync || t - prevT >= 0.01666666) {
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			nvgBeginFrame(ctx, (float)width, (float)height, (float)width / (float)height);
+			draw(ctx);
+			nvgEndFrame(ctx);
+			glfwSwapBuffers(window);
+			prevT = t;
+		}
 	}
 	destoryGame(ctx);
 	nvgDeleteGL3(ctx);

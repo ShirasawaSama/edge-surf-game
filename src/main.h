@@ -2,4 +2,4 @@
 #include <stdbool.h>
 
 int width, height, fps;
-bool playPaused;
+bool playPaused, vSync;
