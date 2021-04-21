@@ -58,16 +58,16 @@ jobs:
       run: premake5 vs2019
 
     - name: Install required packages
-      run: cd build && vcpkg install glfw3:x86-windows-static glew:x86-windows-static glfw3:x64-windows-static glew:x64-windows-static && vcpkg integrate install
+      run: vcpkg install glfw3:x86-windows-static glew:x86-windows-static glfw3:x64-windows-static glew:x64-windows-static && vcpkg integrate install
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Build
-      run: MSBuild.exe edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x86
+      run: MSBuild.exe build\edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x86
 
     - name: Move files
-      run: cd .. && mkdir edge-surf-game && move /Y assets edge-surf-game && move build\edge-surf-game.exe edge-surf-game
+      run: mkdir edge-surf-game && move /Y assets edge-surf-game && move build\edge-surf-game.exe edge-surf-game
 
     - name: Create zip file
       run: tar -a -c -f edge-surf-game-windows-x86.zip edge-surf-game
@@ -81,7 +81,7 @@ jobs:
         tag: ${{ github.ref }}
 
     - name: Build
-      run: MSBuild.exe edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64
+      run: MSBuild.exe build\edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64
 
     - name: Move files
       run: del edge-surf-game\edge-surf-game.exe && move build\edge-surf-game.exe edge-surf-game
