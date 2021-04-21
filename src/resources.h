@@ -5,7 +5,7 @@
 #else
 #define ASSETS_ROOT "./assets/"
 #endif
-#define ASSETS_PATH(TO) ASSETS_ROOT ## TO
+#define ASSETS_PATH(TO) ASSETS_ROOT TO
 #define BGM_PATH ASSETS_PATH("bgm.mp3")
 
 extern int backgroundImage, surferImage, playerImage, boardImage, interfaceImage, naughtySurferImage, enemyImage;

@@ -1,4 +1,6 @@
+#ifdef _WIN32
 #pragma warning(disable:4244)
+#endif
 #include "utils.h"
 #include "game.h"
 #include "resources.h"
@@ -77,7 +79,7 @@ void resetGame() {
     if (objects != NULL) cc_list_destroy(objects);
     cc_list_new(&objects);
     paused = true;
-    heart = 1;
+    heart = 3;
     animationTimer = 1;
     srand((int)time(NULL));
     for (int i = rand() % 10; i-- > 0;) srand(rand());

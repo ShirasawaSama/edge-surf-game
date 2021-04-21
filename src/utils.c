@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GLFW/glfw3.h>
-#define URL(CMD) CMD ## "https://github.com/ShirasawaSama/edge-surf-game"
+#define URL(CMD) CMD " https://github.com/ShirasawaSama/edge-surf-game"
 #if defined _WIN32
 #include <Windows.h>
 #define COMMAND URL("start")
@@ -41,7 +41,7 @@ void getUserName(char* ch) {
 	DWORD len = 100;
 	GetUserNameA(ch, &len);
 #elif defined linux
-	struct passwd* pwd = getpwuid(getid());
+	struct passwd* pwd = getpwuid(getgid());
 	strcpy(ch, pwd->pw_name);
 #elif defined __APPLE__
 	strcpy(ch, getenv("USER"));
