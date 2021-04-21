@@ -17,7 +17,7 @@ Object* makeSmallObjectWithIndex(float x, float y, int index) {
     return obj;
 }
 
-Object* makeSmallObject(float x, float y) { return makeSmallObjectWithIndex(x, y, floor(randomDouble() * 8)); }
+Object* makeSmallObject(float x, float y) { return makeSmallObjectWithIndex(x, y, (int) floor(randomDouble() * 8)); }
 
 Object* makeBigObjectWithIndex(float x, float y, int index) {
     Object* obj = (Object*)malloc(sizeof(Object));
@@ -31,8 +31,8 @@ Object* makeBigObjectWithIndex(float x, float y, int index) {
 }
 
 Object* makeBigObject(float x, float y) {
-    int index = floor(randomDouble() * 30);
-    return makeBigObjectWithIndex(x, y, index >= 25 && index <= 27 ? floor(randomDouble() * 25) : index);
+    int index = (int)floor(randomDouble() * 30);
+    return makeBigObjectWithIndex(x, y, index >= 25 && index <= 27 ? (int)floor(randomDouble() * 25) : index);
 }
 
 Object* makeRippleObject(float x, float y) {
@@ -49,7 +49,7 @@ Object* makeRippleObject(float x, float y) {
 Object* makeSlowdownObject(float x, float y) {
     Object* obj = (Object*)malloc(sizeof(Object));
     obj->type = SLOWDOWN_OBJECT;
-    obj->index = floor(randomDouble() * 9);
+    obj->index = (int)floor(randomDouble() * 9);
     obj->x = x;
     obj->y = y;
     obj->stage = 0;
@@ -61,7 +61,7 @@ Object* makeSlowdownObject(float x, float y) {
 Object* makeAmbientObject(float x, float y) {
     Object* obj = (Object*)malloc(sizeof(Object));
     obj->type = AMBIENT_OBJECT;
-    obj->index = floor(randomDouble() * 4);
+    obj->index = (int)floor(randomDouble() * 4);
     obj->x = x;
     obj->y = y;
     obj->stage = 0;
@@ -73,7 +73,7 @@ Object* makeAmbientObject(float x, float y) {
 Object* makeSandBarObject(float x, float y) {
     Object* obj = (Object*)malloc(sizeof(Object));
     obj->type = SAND_BAR_OBJECT;
-    obj->index = floor(randomDouble() * 4);
+    obj->index = (int)floor(randomDouble() * 4);
     obj->x = x;
     obj->y = y;
     obj->stage = obj->maxStage = 0;
@@ -104,7 +104,7 @@ Object* makeInteractObjectWithIndex(float x, float y, int index) {
 }
 
 Object* makeInteractObject(float x, float y) {
-    int index = floor(randomDouble() * 6);
+    int index = (int)floor(randomDouble() * 6);
     Object* obj = makeInteractObjectWithIndex(x, y, index == 5 ? 6 : index);
     return obj;
 }
@@ -130,7 +130,7 @@ void makeDockObject(CC_List* list, float x, float y, int index) {
     obj->stage = obj->maxStage = 0;
     obj->once = false;
     cc_list_add(list, obj);
-    if (index < 7 && randomFloat() > 0.5F) cc_list_add(list, makeSmallObjectWithIndex(x + 13 + randomFloat() * 6.0F, y + randomFloat() * 10.0F, 8 + floor(randomFloat() * 12)));
+    if (index < 7 && randomFloat() > 0.5F) cc_list_add(list, makeSmallObjectWithIndex(x + 13 + randomFloat() * 6.0F, y + randomFloat() * 10.0F, 8 + (int)floor(randomFloat() * 12)));
 }
 
 void makeDockOnTop(float x, float y, CC_List* list, bool hasTop) { if (hasTop || randomFloat() > 0.8F) makeDockObject(list, x, y - 64, 4); }
@@ -145,7 +145,7 @@ void makeDocksObject(float x, float y, CC_List* list, bool hasTop) {
         float left = x;
         makeDockObject(list, x, y, 0);
         makeDockOnTop(x, y, list, hasTop);
-        for (int i = randomFloat() * 3; i-- > 0;) {
+        for (int i = (int)randomFloat() * 3; i-- > 0;) {
             left += 64;
             float it = randomFloat();
             makeDockObject(list, left, y, it > 0.75F ? 1 : it > 0.5F ? 7 : it > 0.25F ? 8 : 9);
@@ -164,9 +164,9 @@ void makeStarterObject(float width, float height, CC_List* list) {
 
     float x = centerX - 64 * 6, y = centerY + 128;
 
-    for (int i = 10 + randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
-    for (int i = 5 + randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
-    for (int i = 3 + randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+    for (int i = 10 + (int)randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+    for (int i = 5 + (int)randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
+    for (int i = 3 + (int)randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450 - 250, y + randomFloat() * 300 - 200));
 
     makeDockOnTop(x, y, list, true);
     makeDockObject(list, x, y, 0);
@@ -176,9 +176,9 @@ void makeStarterObject(float width, float height, CC_List* list) {
 
     x = centerX + 96;
 
-    for (int i = 10 + randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
-    for (int i = 5 + randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
-    for (int i = 3 + randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+    for (int i = 10 + (int)randomFloat() * 7; i-- > 0;) cc_list_add(list, makeSlowdownObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+    for (int i = 5 + (int)randomFloat() * 5; i-- > 0;) cc_list_add(list, makeBigObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
+    for (int i = 3 + (int)randomFloat() * 3; i-- > 0;) cc_list_add(list, makeSmallObject(x + randomFloat() * 450, y + randomFloat() * 300 - 200));
 
     makeDockObject(list, x, y, 0);
     makeDockObject(list, x += 64, y, 9);

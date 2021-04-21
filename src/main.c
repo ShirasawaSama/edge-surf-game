@@ -98,13 +98,16 @@ int main() {
     glfwSetTime(0);
     double prevT = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
-        glfwGetWindowSize(window, &width, &height);
         glfwPollEvents();
         double t = glfwGetTime();
         fps = (int)round(1.0 / (t - prevT));
         if (vSync || t - prevT >= 0.01666666) {
+            int fbWidth, fbHeight;
+            glfwGetWindowSize(window, &width, &height);
+            glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+            glViewport(0, 0, fbWidth, fbHeight);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-            nvgBeginFrame(ctx, (float)width, (float)height, (float)width / (float)height);
+            nvgBeginFrame(ctx, (float)width, (float)height, (float)fbWidth / (float)width);
             draw(ctx);
             nvgEndFrame(ctx);
             glfwSwapBuffers(window);

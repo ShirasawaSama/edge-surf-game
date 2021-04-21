@@ -21,8 +21,6 @@ extern int width, height, fps;
 extern int backgroundImage, playerImage, boardImage, objectsSmallImage, objectsBigImage, interfaceImage, naughtySurferImage, enemyImage;
 extern int objectHitBoxs[][2], objectTextures[10];
 
-double cursorX = 0, cursorY = 0;
-
 struct Score {
     int score;
     char username[30];
@@ -207,6 +205,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void clickCallback(GLFWwindow* window, int button, int action, int mods) {
     if (action != GLFW_PRESS || button != GLFW_MOUSE_BUTTON_LEFT) return;
+    double cursorX, cursorY;
+    glfwGetCursorPos(window, &cursorX, &cursorY);
     if (cursorX >= width - 36 && cursorY <= 50) settingOpen = !settingOpen;
     if (!settingOpen || cursorX < width - SETTING_WIDTH - 16) {
         if (cursorY >= height - 90 && cursorY <= height - 70) editMode = !editMode;
@@ -221,17 +221,10 @@ void clickCallback(GLFWwindow* window, int button, int action, int mods) {
     (void)mods;
 }
 
-void cursorCallback(GLFWwindow* window, double x, double y) {
-    cursorX = x;
-    cursorY = y;
-    (void)window;
-}
-
 void initGame(NVGcontext* ctx, GLFWwindow* window) {
     loadResources(ctx);
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, clickCallback);
-    glfwSetCursorPosCallback(window, cursorCallback);
     getUserName(username);
     resetGame();
 }
