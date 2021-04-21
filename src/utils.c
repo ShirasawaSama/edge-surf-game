@@ -2,11 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GLFW/glfw3.h>
+#define URL(CMD) CMD ## "https://github.com/ShirasawaSama/edge-surf-game"
 #if defined _WIN32
 #include <Windows.h>
+#define COMMAND URL("start")
 #elif defined linux
 #include <unistd.h>
 #include <pwd.h>
+#define COMMAND URL("xdg-open")
+#else
+#define COMMAND URL("open")
 #endif
 
 double randomDouble() {
@@ -29,16 +34,7 @@ void drawImage(NVGcontext* vg, int image, float alpha, float sx, float sy, float
 	nvgFill(vg);
 }
 
-void openUrl() {
-#if defined _WIN32
-	char command[] = "start https://github.com/ShirasawaSama/edge-surf-game";
-#elif defined linux
-	char command[] = "xdg-open https://github.com/ShirasawaSama/edge-surf-game";
-#else
-	char command[] = "open https://github.com/ShirasawaSama/edge-surf-game";
-#endif
-	system(command);
-}
+void openUrl() { system(COMMAND); }
 
 void getUserName(char* ch) {
 #if defined _WIN32

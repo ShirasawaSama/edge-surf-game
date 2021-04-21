@@ -10,6 +10,7 @@
 #include "main.h"
 #include "game.h"
 #include "miniaudio.h"
+#include "resources.h"
 
 int width, height, fps;
 bool playPaused = false, vSync = true;
@@ -24,7 +25,7 @@ void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint
 ma_decoder decoder;
 ma_device device;
 int playMusic() {
-	ma_result result = ma_decoder_init_file("../src/bgm.mp3", NULL, &decoder);
+	ma_result result = ma_decoder_init_file(BGM_PATH, NULL, &decoder);
 	if (result != MA_SUCCESS) {
 		printf("Failed to init.\n");
 		return -1;
