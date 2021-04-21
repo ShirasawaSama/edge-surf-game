@@ -64,7 +64,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Build
-      run: MSBuild.exe build\edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x86
+      run: MSBuild.exe build\edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=Win32
 
     - name: Move files
       run: mkdir edge-surf-game && move /Y assets edge-surf-game && move build\edge-surf-game.exe edge-surf-game
