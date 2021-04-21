@@ -3,30 +3,30 @@
 #include "cc_list.h"
 
 enum ObjectType {
-	SMALL_OBJECT,
-	BIG_OBJECT,
-	SLOWDOWN_OBJECT,
-	RIPPLE_OBJECT,
-	AMBIENT_OBJECT,
-	SAND_BAR_OBJECT,
-	ISLAND_OBJECT,
-	INTERACT_OBJECT,
-	EFFECT_OBJECT,
-	DOCK_OBJECT
+    SMALL_OBJECT,
+    BIG_OBJECT,
+    SLOWDOWN_OBJECT,
+    RIPPLE_OBJECT,
+    AMBIENT_OBJECT,
+    SAND_BAR_OBJECT,
+    ISLAND_OBJECT,
+    INTERACT_OBJECT,
+    EFFECT_OBJECT,
+    DOCK_OBJECT
 };
 
 extern int objectHitBoxs[10][2];
 
 typedef struct Object {
-	int type, index, stage, maxStage;
-	float x, y;
-	bool once;
+    int type, index, stage, maxStage;
+    float x, y;
+    bool once;
 } Object;
 
 typedef struct NaughtySurfer {
-	int type, action;
-	float x, y;
-	bool visible;
+    int type, action;
+    float x, y;
+    bool visible;
 } NaughtySurfer;
 
 Object* makeSmallObject(float x, float y);

@@ -33,13 +33,13 @@ jobs:
       run: mkdir edge-surf-game && mv assets build/edge-surf-game edge-surf-game/
 
     - name: Create zip file
-      run: tar zcvf edge-surf-game.tar.gz edge-surf-game/*
+      run: tar zcvf edge-surf-game-linux.tar.gz edge-surf-game/*
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: edge-surf-game.tar.gz
+        file: edge-surf-game-linux.tar.gz
         asset_name: edge-surf-game-linux.tar.gz
         tag: ${{ github.ref }}
 
@@ -54,28 +54,45 @@ jobs:
     - name: Setup premake
       uses: abel0b/setup-premake@v1
 
-    - name: Install required packages
-      run: vcpkg install glfw3 glew && vcpkg integrate install
-
     - name: Premake
       run: premake5 vs2019
+
+    - name: Install required packages
+      run: cd build && vcpkg install glfw3:x86-windows-static glew:x86-windows-static glfw3:x64-windows-static glew:x64-windows-static && vcpkg integrate install
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Build
-      run: MSBuild.exe build\edge-surf-game.sln /t:Rebuild /p:Configuration=Release
+      run: MSBuild.exe edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x86
 
     - name: Move files
-      run: mkdir edge-surf-game && move /Y assets edge-surf-game && move build\edge-surf-game.exe edge-surf-game
+      run: cd .. && mkdir edge-surf-game && move /Y assets edge-surf-game && move build\edge-surf-game.exe edge-surf-game
 
     - name: Create zip file
-      run: tar -a -c -f edge-surf-game.zip edge-surf-game
+      run: tar -a -c -f edge-surf-game-windows-x86.zip edge-surf-game
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: edge-surf-game.zip
-        asset_name: edge-surf-game-windows.tar.gz
+        file: edge-surf-game-windows-x86.zip
+        asset_name: edge-surf-game-windows-x86.zip
+        tag: ${{ github.ref }}
+
+    - name: Build
+      run: MSBuild.exe edge-surf-game.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64
+
+    - name: Move files
+      run: del edge-surf-game\edge-surf-game.exe && move build\edge-surf-game.exe edge-surf-game
+
+    - name: Create zip file
+      run: tar -a -c -f edge-surf-game-windows-x64.zip edge-surf-game
+
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: edge-surf-game-windows-x64.zip
+        asset_name: edge-surf-game-windows-x64.zip
         tag: ${{ github.ref }}
