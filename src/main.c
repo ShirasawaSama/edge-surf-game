@@ -1,8 +1,6 @@
-#define MINIAUDIO_IMPLEMENTATION
 #include <stdio.h>
+#ifdef NANOVG_GLEW
 #include <GL/glew.h>
-#ifdef __APPLE__
-#define GLFW_INCLUDE_GLCOREARB
 #endif
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
@@ -68,23 +66,27 @@ int main() {
         return -1;
     }
     glfwMakeContextCurrent(window);
+#ifdef NANOVG_GLEW
     if (glewInit() != GLEW_OK) {
         printf("Could not init glew.\n");
         return -1;
     }
-    #ifndef _WIN32
+#endif
+#ifndef _WIN32
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    #endif
+#endif
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
     glfwWindowHint(GLFW_SAMPLES, 4);
+#ifdef NANOVG_GLEW
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_MULTISAMPLE);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glGetError();
+#endif
     NVGcontext* ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
     if (ctx == NULL) {
         printf("Could not init nanovg.\n");

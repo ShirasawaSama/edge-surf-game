@@ -23,7 +23,7 @@ solution "edge-surf-game"
     configurations { "Debug", "Release" }
     platforms {"x64", "x32"}
     warnings "Extra"
-    defines { "NANOVG_GL3_IMPLEMENTATION", "GLEW_STATIC", "_CRT_SECURE_NO_WARNINGS" }
+    defines { "NANOVG_GL3_IMPLEMENTATION", "GLEW_STATIC", "_CRT_SECURE_NO_WARNINGS", "MINIAUDIO_IMPLEMENTATION" }
 
     filter "configurations:Debug"
         defines { "DEBUG" }
@@ -61,6 +61,7 @@ solution "edge-surf-game"
             defines { "NANOVG_GLEW" }
 
         configuration { "macosx" }
+            defines { "GLFW_INCLUDE_GLCOREARB" }
             buildoptions { "`pkg-config --cflags glfw3`" }
             linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit", "-framework CoreVideo", "`pkg-config --libs glfw3`" }
 

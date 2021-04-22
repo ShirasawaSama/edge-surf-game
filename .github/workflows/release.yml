@@ -55,7 +55,7 @@ jobs:
       uses: abel0b/setup-premake@v1
 
     - name: Install required packages
-      run: brew install glfw3 glew pkg-config
+      run: brew install glfw3 pkg-config
 
     - name: Premake
       run: premake5 gmake
