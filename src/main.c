@@ -22,11 +22,11 @@ void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint
 
 ma_decoder decoder;
 ma_device device;
-int playMusic() {
+void playMusic() {
     ma_result result = ma_decoder_init_file(BGM_PATH, NULL, &decoder);
     if (result != MA_SUCCESS) {
         printf("Failed to init music.\n");
-        return -1;
+        return;
     }
 
     ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
@@ -39,16 +39,14 @@ int playMusic() {
     if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
         printf("Failed to open playback device.\n");
         ma_decoder_uninit(&decoder);
-        return -1;
+        return;
     }
 
     if (ma_device_start(&device) != MA_SUCCESS) {
         printf("Failed to start playback device.\n");
         ma_device_uninit(&device);
         ma_decoder_uninit(&decoder);
-        return -1;
     }
-    return 0;
 }
 
 void onError(int code, const char* message) { printf("Code: %d, %s\n", code, message); }
@@ -92,8 +90,7 @@ int main() {
     }
     glfwSwapInterval(vSync);
     initGame(ctx, window);
-    int res = playMusic();
-    if (res != 0) return res;
+    playMusic();
     printf("Loaded!\n");
     glfwSetTime(0);
     double prevT = glfwGetTime();
