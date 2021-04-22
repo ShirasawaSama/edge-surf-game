@@ -59,6 +59,14 @@ int main() {
         printf("Failed to init GLFW.");
         return -1;
     }
+#ifndef _WIN32
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     GLFWwindow* window = glfwCreateWindow(1200, 800, "Edge Surf Game", NULL, NULL);
     if (!window) {
         printf("Cannot create window.");
@@ -71,16 +79,6 @@ int main() {
         printf("Could not init glew.\n");
         return -1;
     }
-#endif
-#ifndef _WIN32
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#endif
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-#ifdef NANOVG_GLEW
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_MULTISAMPLE);
