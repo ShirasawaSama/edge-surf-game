@@ -63,7 +63,7 @@ solution "edge-surf-game"
         configuration { "macosx" }
             defines { "GLFW_INCLUDE_GLCOREARB" }
             buildoptions { "`pkg-config --cflags glfw3`" }
-            linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit", "-framework CoreVideo", "`pkg-config --libs glfw3`" }
+            linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit", "-framework CoreVideo", "`pkg-config --libs --static glfw3`" }
 
         filter { "action:vs*", "Debug" }
             links { "glew32d" }
