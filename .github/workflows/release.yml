@@ -27,7 +27,7 @@ jobs:
       run: premake5 gmake
 
     - name: Make
-      run: cd build && make edge-surf-game
+      run: cd build && make edge-surf-game config=release_x64
 
     - name: Move files
       run: mkdir edge-surf-game && mv assets build/edge-surf-game edge-surf-game/
@@ -61,7 +61,7 @@ jobs:
       run: premake5 gmake
 
     - name: Make
-      run: cd build && make edge-surf-game
+      run: cd build && make edge-surf-game config=release_x64
 
     - name: Move files
       run: mkdir edge-surf-game && mv assets build/edge-surf-game edge-surf-game/
