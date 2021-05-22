@@ -713,7 +713,7 @@ void drawEnemy(NVGcontext* ctx) {
     if (enemyStoped) drawImage(ctx, enemyImage, 1, 128, boardBrokenTimer / 10 * 128, 128, 128, enemyX - offset, enemyY - distance);
     else {
         float tx = offset + playerX - 64, ty = distance + playerY - 64;
-        if (ty - enemyY > 6) enemyY += 4.2F;
+        if (ty - enemyY > 6) enemyY += 4.3F;
         enemyX += 2.0F * (enemyX > tx ? -1 : enemyX == tx ? 0 : 1);
         if (enemyX - tx < 2.5F) enemyX = tx;
     }
